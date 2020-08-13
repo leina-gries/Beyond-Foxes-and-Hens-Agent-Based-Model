@@ -3,6 +3,7 @@ This code is an attempt to work out the classes and perform some basic methods w
 """
 import random
 import math
+"**********************************************************************************************************************"
 class species:
     # later this should be a nice little GUI
     # add growth later...
@@ -90,7 +91,7 @@ class species:
         self.personal_maximum_age = av_max_age * random.randint(85,115)/100
         #print(self.personal_maximum_age)
 
-        
+
     def print(self):
         print("age is ", self.age)   # FIXME Make ages follow a more realistic distribution
         print("age in days is", self.age_days)
@@ -120,7 +121,7 @@ class species:
             # otherwise, weight is going to depend on amount eaten... deal with this later
             # deal with whether or not they get eaten.... or starve
 """
-
+"**********************************************************************************************************************"
 class habitat:
     # river: array, present or not, length, width, works for rivers and lengths
     def __init__(self, area, percent_shelter, average_size_shelter, river_presence, nutrient_availability, sun_availabiility, max_temp,
@@ -134,7 +135,7 @@ class habitat:
         self.river_presence = river_presence[0]
         self.river_length = river_presence[1]
         self.river_width = river_presence[2]
-
+        self.units_of_shelter = 0
 
 
 
@@ -257,17 +258,98 @@ class habitat:
                 width_coordinate = 0
             self.map = map_holder_river
 
+"**********************************************************************************************************************"
+class plant:  #FIXME starting with just one species and assuming that all animals can eat it, add impact of temperature, seasons, etc
+    # FIXME add light
+    def __init__(self, width, average_height, weekly_growth, weekly_water_needs, nutrient_needs, minimum_height, number_seeds, seed_distribution, cover_provided):
+        self.alive = True
+        self.width = random.randint(5*width, 15*width)/10
+        self.height = random.randint(75 * average_height, 125 * average_height)/100
+        self.weekly_growth_average = weekly_growth
+        #self.density = density # number of plants per square foot  # mayve do this in a more metal place????
+        self.water_needs = random.randint(9*weekly_water_needs, 11*weekly_water_needs)/10
+        self.nutrient_needs = nutrient_needs
+        self.minimum_height = random.randint(75*minimum_height, 125*minimum_height)/100
+        pollinated = random.randint(0,1)
+        if pollinated == 1:
+            self.pollinated = True
+        else:
+            self.pollinated = False
+        self.number_seeds = random.randint(75*number_seeds, 125*number_seeds)/100
+        self.seed_distribution = random.randint(5*seed_distribution, 15*seed_distribution)/10
+        self.cover_provided = cover_provided*((self.width*self.height)/100)  # percent cover provided per inch of height
+        self.water_log = []        # currently on a two week set up, make variable later.
+        self.nutrient_log =[]
+        self.drought_status = False
 
 
-def main():
+    def growth(self, day):  # done at the end of each week
+        counter = 0
+        print(self.water_log)
+        for i in range(day-7, day):
+            #print(i)
+            n = self.water_log[i]
+            #print(n)
+            counter = counter + n
+       # print("counter", counter)
+       # print(self.water_needs)
+        weekly_water = counter
+        if self.drought_status == True:  # did not get enough water last week
+            if weekly_water < self.water_needs:  # not enough water for 2 weeks in a row, dead
+                self.alive = False
+                #print("1")
+            else:
+                self.drought_status = False  # enough water, growth
+                growth =  random.randint(75*self.weekly_growth_average, 125*self.weekly_growth_average)/100
+                print("growth", growth)
+                self.height = self.height + growth /2
+                self.width = self.width + growth /2
+                #print("2")
+        else:  # not currently in a state of drought
+            if weekly_water < self.water_needs:  # not enough water, into drought
+                self.drought_status = True
+                #print("3")
+            else:
+                self.drought_status = False    # enough water, growth
+                growth = random.randint(75 * self.weekly_growth_average, 125 * self.weekly_growth_average) / 100
+                print(growth)
+                self.height = self.height + growth / 2
+                self.width = self.width + growth / 2
+                # print("4")
+"**********************************************************************************************************************"
+class weather:  # ADD WIND AS A POLLINATION METHOD LATER, TEMPERATURE, ETC
+    def __init__(self, rain_frequency, rain_levels, average_sun_levels):
+        self.rain_frequency = rain_frequency  # percent out of 100 that it rains
+        self.average_amount_rain = rain_levels
+        self.average_sun_levels = average_sun_levels
+        self.sun_level_daily = 0
+        self.rain = False
+        self.amount_rain = 0
 
+    def daily_weather(self):
+        rain_day = random.randint(0, 100)
+        #print(rain_day, self.rain_frequency)
+        if rain_day <= self.rain_frequency:  # FIXME deal with sun presence ASAP!!!!!!!!!
+            self.rain = True
+        else:
+            self.rain = False
+        if self.rain == True:
+            self.amount_rain = random.randint(5*self.average_amount_rain, 15*self.average_amount_rain)/10
+            self.sun_level_daily = random.randint(1*self.average_sun_levels, 5*self.average_sun_levels)/10
+        else:
+            self.amount_rain = 0
+            self.sun_level_daily = random.randint(5*self.average_sun_levels, 15*self.average_sun_levels)/10
+        return self.amount_rain
+"**********************************************************************************************************************"
+def create_creatures():
     my_creatures = []
     for i in range(50):
         my_creatures.append(species(80,10,150,20,8,1,3,[], ["rabbit"],100,100,100,100,100,100,100,100,100))
     #for animal in my_creatures:
        # animal.print()
        # print("******************")
-
+"**********************************************************************************************************************"
+def create_habitat():
     yes = habitat(2000,10,5, [True,10,2], 100,100,80,40,20,10)
     yes.create_map()
     yes.place_rivers()
@@ -280,6 +362,30 @@ def main():
         yes.check_if_available()
 
     print(yes.map)
+"**********************************************************************************************************************"
+def make_weather():
+    weather1 = weather(50, 2, 90)
+    #weather1.daily_weather()
+    daily_weather = []
+    for i in range(7):
+        daily_weather.append(weather1.daily_weather())
+    return daily_weather
+
+"**********************************************************************************************************************"
+def make_plants():
+    plant1 = plant(6,8,1,2,90,2,12,30,8)
+    plant1.water_log = make_weather()
+    print("hre", plant1.height, plant1.width)
+    plant1.growth(7)
+    print(plant1.height, plant1.width)
+"**********************************************************************************************************************"
+
+def main():
+    #create_creatures()
+   # create_habitat()
+    #make_weather()
+    make_plants()
+
 
 
 main()
