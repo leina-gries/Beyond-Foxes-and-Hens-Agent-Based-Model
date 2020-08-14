@@ -144,9 +144,9 @@ class habitat:
         # creating the map randomly
         holder = int(math.sqrt(self.area))
         self.length = random.randint(int(holder*0.5), int(holder*1.5))
-        print(self.length, "length")
+       # print(self.length, "length")
         self.width = int(self.area/self.length)
-        print(self.width, "width")
+       # print(self.width, "width")
         self.map = []
         mini_map = []
         for i in range(0, self.length):
@@ -169,14 +169,14 @@ class habitat:
             counter = counter + clump_size
             self.units_of_shelter = self.units_of_shelter - clump_size
             #print(units_of_shelter, "units left")
-        print("sizes", self.shelter_clump_sizes, "counter", counter)
+     #   print("sizes", self.shelter_clump_sizes, "counter", counter)
         return self.shelter_clump_sizes
 
         # randomly spacing the units of shelter in their size clumps out
     def space_clump_sizes(self):
         clump_list = []
         lines_per_clump = []
-        print(self.shelter_clump_sizes)
+      #  print(self.shelter_clump_sizes)
         for i in self.shelter_clump_sizes:
             while i > 0:
                 line_size = random.randint(1, i)
@@ -185,7 +185,7 @@ class habitat:
             lines_per_clump.append(clump_list)
             clump_list = []
         self.lines_per_clump = lines_per_clump
-        print(self.lines_per_clump)
+     #   print(self.lines_per_clump)
         return self.lines_per_clump
 
         # checking if a space is available
@@ -235,10 +235,10 @@ class habitat:
             mini_map_river = []
 
 
-        print(self.river_presence)
+       # print(self.river_presence)
         if self.river_presence == True:
             # first, a flat accross river. no slope, just going across until
-            print(self.river_length, self.river_width)
+           # print(self.river_length, self.river_width)
             length_coordinate = 0
             width_coordinate = 0
             for i in range(self.river_width):
@@ -257,6 +257,19 @@ class habitat:
                 length_coordinate = 1
                 width_coordinate = 0
             self.map = map_holder_river
+
+    def place_plant_objects(self, plant_objects):
+        for i in plant_objects:
+            random_length = random.randint(1, self.length)
+            random_width = random.randint(1, self.width)
+            if self.map[random_length-1][random_width-1] == "0":
+                print("wooot")
+            else:
+               while self.map[random_length - 1][random_width - 1] != "0":
+                    random_length = random.randint(1, self.length)
+                    random_width = random.randint(1, self.width)
+
+
 
 "**********************************************************************************************************************"
 class plant:  #FIXME starting with just one species and assuming that all animals can eat it, add impact of temperature, seasons, etc
@@ -283,9 +296,10 @@ class plant:  #FIXME starting with just one species and assuming that all animal
         self.drought_status = False
 
 
+
     def growth(self, day):  # done at the end of each week
         counter = 0
-        print(self.water_log)
+      #  print(self.water_log)
         for i in range(day-7, day):
             #print(i)
             n = self.water_log[i]
@@ -340,6 +354,11 @@ class weather:  # ADD WIND AS A POLLINATION METHOD LATER, TEMPERATURE, ETC
             self.amount_rain = 0
             self.sun_level_daily = random.randint(5*self.average_sun_levels, 15*self.average_sun_levels)/10
         return self.amount_rain
+
+"**********************************************************************************************************************"
+
+"********************************************    PROCEDURES    ********************************************************"
+
 "**********************************************************************************************************************"
 def create_creatures():
     my_creatures = []
@@ -360,8 +379,10 @@ def create_habitat():
 
     while yes.check_if_available() == False:
         yes.check_if_available()
+        "************************"
+    yes.place_plant_objects(make_plants())
 
-    print(yes.map)
+    return yes.map
 "**********************************************************************************************************************"
 def make_weather():
     weather1 = weather(50, 2, 90)
@@ -372,19 +393,27 @@ def make_weather():
     return daily_weather
 
 "**********************************************************************************************************************"
-def make_plants():
-    plant1 = plant(6,8,1,2,90,2,12,30,8)
-    plant1.water_log = make_weather()
-    print("hre", plant1.height, plant1.width)
-    plant1.growth(7)
-    print(plant1.height, plant1.width)
+def make_plants(): # FIXME add plant placement
+    my_plants = []
+    for i in range(50):
+        my_plants.append(plant(6,8,1,2,90,2,12,30,8))
+    #for i in my_plants:
+   #    print(i)
+
+   # plant1.water_log = make_weather()
+   # print("hre", plant1.height, plant1.width)
+   # plant1.growth(7)
+    return my_plants
 "**********************************************************************************************************************"
 
 def main():
     #create_creatures()
-   # create_habitat()
-    #make_weather()
     make_plants()
+    print(create_habitat())
+
+    #make_weather()
+    # #FIXME HOW TO PLACE THE GRASS OBJECTS ON A MAP
+    #print("test")
 
 
 
