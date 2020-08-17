@@ -5,14 +5,13 @@ import random
 import math
 "**********************************************************************************************************************"
 class species:
-    # later this should be a nice little GUI
     # add growth later...
     # make preset models later too with types of species ie wolf rabbit, so they don't have to add all the variables
     # odds maturing should be a number between 1 and 100 representing percentage survived to adulthood
-    def __init__(self, odds_maturing_to_adult, adult_age, av__adult_weight, av_max_age, annual_growth_rate,
+    def __init__(self, map, odds_maturing_to_adult, adult_age, av__adult_weight, av_max_age, annual_growth_rate,
                  gestation_period, dependency_time,
                  predators, prey, av_speed, av_range, vision, sound, smell, temp_min, temp_max, water_needs,
-                 food_needs):
+                 food_needs, herbivore, carnivore):
 
         # age, alive or dead
         self.age = random.randint(0, av_max_age)
@@ -49,7 +48,7 @@ class species:
         self.temp_min = temp_min
         self.temp_max = temp_max
         self.water_needs = water_needs
-        self.food_needs = food_needs
+        self.food_needs = food_needs  # weekly food total needed
 
         # determining gender - can be weighted if a species has an uneven distribution
         y = random.randint(0,1)
@@ -71,8 +70,8 @@ class species:
         #print(self.fertility)
 
         # making an empty dictionary
-        self.food_history = {}
-        self.water_history = {}
+        self.food_history = [0]
+        self.water_history = []
 
 
         # determining weight - not based on food......
@@ -90,6 +89,17 @@ class species:
 
         self.personal_maximum_age = av_max_age * random.randint(85,115)/100
         #print(self.personal_maximum_age)
+
+        self.herbivore = herbivore
+        self.carnivore = carnivore
+        self.map = map
+
+        self.map_for_animals = map.animal_available_list  # this is just the open places where we can originally place an animal
+
+        # chose place for animal
+        self.location = self.map_for_animals[random.randint(0, len(self.map_for_animals)-1)]
+        #print(self.location)
+
 
 
     def print(self):
@@ -109,6 +119,42 @@ class species:
 
     def day(self):
         self.age_days = self.age_days + 1
+
+    def step(self, height_change, width_change):
+        #print(self.age, self.location)
+        self.location[0] = self.location[0]+ height_change
+        self.location[1] = self.location[1]+ width_change
+        #print(self.location)
+        return self.location
+
+
+    def eat(self):  #FIXME don't let animals go into the river.
+        #print(self.map.map[0][1])
+        #print(self.location)
+        #print(self.location[0], self.location[1])
+        if self.herbivore == True:
+            if type(self.map.map[self.location[0]-1][self.location[1]-1]) == plant:
+                print(plant)
+                plant1 = self.map.map[self.location[0]-1][self.location[1]-1]
+                if plant1.alive == True:
+                    amount_eaten = random.randint(0, int(plant1.height))/plant1.height
+                #print("amount eaten", amount_eaten)
+                    self.food_history.append(amount_eaten)
+                    plant1.be_eaten(amount_eaten)
+            else:
+                pass
+                #self.food_history.append("no plant here.")
+                #### FIXME start here tomorrow. add amount eaten to a list, evaluate if it is enough at the end of the week
+
+
+
+        ###print(self.map.map[self.location[0][self.location[1]]])
+        #print(self.map_for_animals)
+       # print(self.map_for_animals[self.location[0]][self.location[1]])
+
+
+
+
 
 """
     def time_basics(self, duration):  # duration is in years
@@ -137,6 +183,9 @@ class habitat:
         self.river_width = river_presence[2]
         self.units_of_shelter = 0
 
+        self.available_list = []
+        self.animal_available_list = []
+
 
 
     def create_map(self):
@@ -144,9 +193,9 @@ class habitat:
         # creating the map randomly
         holder = int(math.sqrt(self.area))
         self.length = random.randint(int(holder*0.5), int(holder*1.5))
-        print(self.length, "length")
+       # print(self.length, "length")
         self.width = int(self.area/self.length)
-        print(self.width, "width")
+       # print(self.width, "width")
         self.map = []
         mini_map = []
         for i in range(0, self.length):
@@ -169,14 +218,14 @@ class habitat:
             counter = counter + clump_size
             self.units_of_shelter = self.units_of_shelter - clump_size
             #print(units_of_shelter, "units left")
-        print("sizes", self.shelter_clump_sizes, "counter", counter)
+     #   print("sizes", self.shelter_clump_sizes, "counter", counter)
         return self.shelter_clump_sizes
 
         # randomly spacing the units of shelter in their size clumps out
     def space_clump_sizes(self):
         clump_list = []
         lines_per_clump = []
-        print(self.shelter_clump_sizes)
+      #  print(self.shelter_clump_sizes)
         for i in self.shelter_clump_sizes:
             while i > 0:
                 line_size = random.randint(1, i)
@@ -185,11 +234,11 @@ class habitat:
             lines_per_clump.append(clump_list)
             clump_list = []
         self.lines_per_clump = lines_per_clump
-        print(self.lines_per_clump)
+     #   print(self.lines_per_clump)
         return self.lines_per_clump
 
         # checking if a space is available
-    def check_if_available(self): #FIXME Rename
+    def place_shelter(self):
         mini_map = []
         map_holder = []
         for i in self.map:
@@ -199,6 +248,7 @@ class habitat:
             mini_map = []
 
         #FIXME MAKE IT SO THE SHELTER CANNOT BE PLACED ON A RIVER EITHER
+        #FIXME add in the test is availble
         for i in self.lines_per_clump:
             width_coordinate = random.randint(0, self.width)
             length_coordinate = random.randint(0, self.length)
@@ -209,10 +259,12 @@ class habitat:
                             map_holder[length_coordinate-1][width_coordinate-1] = "S"
                         elif map_holder[length_coordinate-1][width_coordinate-1] == "S":
                             map_holder[length_coordinate-1][width_coordinate-1] = "DS"
-                        elif map_holder[length_coordinate-1][width_coordinate-1] == "R" or "W":
-                             # FIXME MAKE MORE EFFICIENT
-                            return False
+                        while map_holder[length_coordinate-1][width_coordinate-1] == "R" or map_holder[length_coordinate-1][width_coordinate-1] == "W":
+                            #print("beeo", map_holder[length_coordinate-1][width_coordinate-1])
+                            width_coordinate = random.randint(0, self.width)
+                            length_coordinate = random.randint(0, self.length)
                     else:
+                       # print("hete")
                         return False
                     width_coordinate = width_coordinate + 1
 
@@ -221,6 +273,41 @@ class habitat:
             #print(x_coordinate, y_coordinate)
         self.map = map_holder
         return True
+
+
+    def check_if_available(self):
+        self.available_list = []
+        first_counter = 0
+        second_counter = 0
+        for i in self.map:
+            first_counter = first_counter + 1
+            for n in i:
+                second_counter = second_counter + 1
+                if n == 0:
+                    self.available_list.append([first_counter-1, second_counter-1])
+                else:
+                    pass
+                  #  print("no", n)
+            second_counter = 0
+       # print(self.available_list)
+
+
+    def check_if_available_for_animal(self):
+        self.animal_available_list = []
+        first_counter = 0
+        second_counter = 0
+        for i in self.map:
+            first_counter = first_counter + 1
+            for n in i:
+                second_counter = second_counter + 1
+                if n != "R" and n != "W":
+                    self.animal_available_list.append([first_counter-1, second_counter-1])
+                else:
+                    pass
+                  #  print("no", n)
+            second_counter = 0
+        return self.animal_available_list
+
 
 
 
@@ -235,10 +322,10 @@ class habitat:
             mini_map_river = []
 
 
-        print(self.river_presence)
+       # print(self.river_presence)
         if self.river_presence == True:
             # first, a flat accross river. no slope, just going across until
-            print(self.river_length, self.river_width)
+           # print(self.river_length, self.river_width)
             length_coordinate = 0
             width_coordinate = 0
             for i in range(self.river_width):
@@ -257,6 +344,32 @@ class habitat:
                 length_coordinate = 1
                 width_coordinate = 0
             self.map = map_holder_river
+
+    def place_plant_objects(self, plant_objects):
+
+        for i in plant_objects:
+            point = random.randint(0, len(self.available_list)-1)
+            #print(self.available_list[point][0], self.available_list[point][1])
+            (self.map[self.available_list[point][0]][self.available_list[point][1]]) = i
+        #print(self.map)
+
+
+
+
+
+
+
+
+        """
+            random_length = random.randint(1, self.length)
+            random_width = random.randint(1, self.width)
+            if self.map[random_length-1][random_width-1] == "0":
+                print("wooot")
+            else:
+               while self.map[random_length - 1][random_width - 1] != "0":
+                    random_length = random.randint(1, self.length)
+                    random_width = random.randint(1, self.width)
+        """
 
 "**********************************************************************************************************************"
 class plant:  #FIXME starting with just one species and assuming that all animals can eat it, add impact of temperature, seasons, etc
@@ -283,9 +396,10 @@ class plant:  #FIXME starting with just one species and assuming that all animal
         self.drought_status = False
 
 
+
     def growth(self, day):  # done at the end of each week
         counter = 0
-        print(self.water_log)
+      #  print(self.water_log)
         for i in range(day-7, day):
             #print(i)
             n = self.water_log[i]
@@ -316,6 +430,17 @@ class plant:  #FIXME starting with just one species and assuming that all animal
                 self.height = self.height + growth / 2
                 self.width = self.width + growth / 2
                 # print("4")
+
+    def print1(self):
+        print("yeeeeeeee")
+
+    def be_eaten(self, amount_eaten):
+        self.height = self.height * amount_eaten
+        if self.height < self.minimum_height:
+            self.alive = False
+        print("hereherehere", amount_eaten)
+
+
 "**********************************************************************************************************************"
 class weather:  # ADD WIND AS A POLLINATION METHOD LATER, TEMPERATURE, ETC
     def __init__(self, rain_frequency, rain_levels, average_sun_levels):
@@ -340,58 +465,4 @@ class weather:  # ADD WIND AS A POLLINATION METHOD LATER, TEMPERATURE, ETC
             self.amount_rain = 0
             self.sun_level_daily = random.randint(5*self.average_sun_levels, 15*self.average_sun_levels)/10
         return self.amount_rain
-"**********************************************************************************************************************"
-def create_creatures():
-    my_creatures = []
-    for i in range(50):
-        my_creatures.append(species(80,10,150,20,8,1,3,[], ["rabbit"],100,100,100,100,100,100,100,100,100))
-    #for animal in my_creatures:
-       # animal.print()
-       # print("******************")
-"**********************************************************************************************************************"
-def create_habitat():
-    yes = habitat(2000,10,5, [True,10,2], 100,100,80,40,20,10)
-    yes.create_map()
-    yes.place_rivers()
-
-
-    yes.create_random_shelter_units()
-    yes.space_clump_sizes()
-
-    while yes.check_if_available() == False:
-        yes.check_if_available()
-
-    print(yes.map)
-"**********************************************************************************************************************"
-def make_weather():
-    weather1 = weather(50, 2, 90)
-    #weather1.daily_weather()
-    daily_weather = []
-    for i in range(7):
-        daily_weather.append(weather1.daily_weather())
-    return daily_weather
-
-"**********************************************************************************************************************"
-def make_plants():
-    plant1 = plant(6,8,1,2,90,2,12,30,8)
-    plant1.water_log = make_weather()
-    print("hre", plant1.height, plant1.width)
-    plant1.growth(7)
-    print(plant1.height, plant1.width)
-"**********************************************************************************************************************"
-
-def main():
-    #create_creatures()
-   # create_habitat()
-    #make_weather()
-    make_plants()
-
-
-
-main()
-
-
-
-
-
 
