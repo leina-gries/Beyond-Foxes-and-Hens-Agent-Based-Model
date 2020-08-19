@@ -8,14 +8,23 @@ class species:
     # add growth later...
     # make preset models later too with types of species ie wolf rabbit, so they don't have to add all the variables
     # odds maturing should be a number between 1 and 100 representing percentage survived to adulthood
-    def __init__(self, map, odds_maturing_to_adult, adult_age, av__adult_weight, av_max_age, annual_growth_rate,
+    def __init__(self, map, odds_maturing_to_adult, adult_age, av_adult_weight, av_max_age, annual_growth_rate,
                  gestation_period, dependency_time,
                  predators, prey, av_speed, av_range, vision, sound, smell, temp_min, temp_max, water_needs,
-                 food_needs, herbivore, carnivore):
+                 food_needs, herbivore, carnivore, name, number_of_offspring, new_generation):
 
+
+        self.odds_maturing_to_adult = odds_maturing_to_adult
         # age, alive or dead
-        self.age = random.randint(0, av_max_age)
+        if new_generation == False:
+            self.age = random.randint(0, av_max_age)
+        else:
+            self.age = 1/365
+
         #print("age", self.age, "age of maturation", adult_age)
+
+        #fixme add in creatures not surviving through maturity
+        """  
         if self.age < adult_age:  # if they are not mature yet
             x = random.randint(1,100)
             #print(x)
@@ -25,13 +34,15 @@ class species:
                 self.alive = False
         else:
             self.alive = True
-
+        """
         self.age_days = self.age * 365
+        self.number_of_offspring = number_of_offspring
 
         #print(self.alive)
         # make all of these actual stats a bell curve distribution later
 
         self.gestation_period = gestation_period
+        self.gestation_period_remaining = gestation_period
         self.dependency_time = dependency_time
 
         self.predators = predators
@@ -58,10 +69,10 @@ class species:
             self.gender = "Female"
        # print(self.gender)
         # determining fertility
+        self.pregnancy = False
         if self.gender == "Female":
             if self.age >= av_max_age - (av_max_age/10): # could be fine tuned to a species
                 self.fertility = False
-                self.pregnancy = False
             else:
                 self.fertility = True
 
@@ -76,10 +87,10 @@ class species:
 
         # determining weight - not based on food......
         if self.age >= adult_age:
-            self.weight = av__adult_weight * random.randint(70,130)/100
+            self.weight = av_adult_weight * random.randint(70,130)/100
         else:
             ratio = self.age / adult_age
-            self.weight = av__adult_weight * ratio
+            self.weight = av_adult_weight * ratio
             # add birth weight later so weight is never zero
 
         #print(self.weight)
@@ -98,7 +109,14 @@ class species:
 
         # chose place for animal
         self.location = self.map_for_animals[random.randint(0, len(self.map_for_animals)-1)]
+       ### map.species_placement.extend([self, self.location])
         #print(self.location)
+
+        self.name = name
+        self.av_adult_weight = av_adult_weight
+        self.av_max_age = av_max_age
+        self.av_speed = av_speed
+        self.av_range = av_range
 
 
 
@@ -134,7 +152,7 @@ class species:
         #print(self.location[0], self.location[1])
         if self.herbivore == True:
             if type(self.map.map[self.location[0]-1][self.location[1]-1]) == plant:
-                print(plant)
+               # print(plant)
                 plant1 = self.map.map[self.location[0]-1][self.location[1]-1]
                 if plant1.alive == True:
                     amount_eaten = random.randint(0, int(plant1.height))/plant1.height
@@ -144,14 +162,19 @@ class species:
             else:
                 pass
                 #self.food_history.append("no plant here.")
-                #### FIXME start here tomorrow. add amount eaten to a list, evaluate if it is enough at the end of the week
-
-
 
         ###print(self.map.map[self.location[0][self.location[1]]])
         #print(self.map_for_animals)
        # print(self.map_for_animals[self.location[0]][self.location[1]])
-
+    def birth(self, number_of_offspring):
+        baby_list = []
+        for i in range(number_of_offspring):
+            baby_list.append(species(self.map, self.odds_maturing_to_adult, self.adult_age, self.av_adult_weight, self.av_max_age, self.annual_growth_rate,
+                     self.gestation_period, self.dependency_time,
+                     self.predators, self.prey, self.av_speed, self.av_range, self.vision, self.sound, self.smell, self.temp_min, self.temp_max, self.water_needs,
+                        self.food_needs, self.herbivore, self.carnivore, self.name, self.number_of_offspring, True))
+        print("list from main", baby_list)
+        return baby_list
 
 
 
@@ -185,7 +208,9 @@ class habitat:
 
         self.available_list = []
         self.animal_available_list = []
+        self.plants = []
 
+        self.species_placement = {}
 
 
     def create_map(self):
@@ -348,6 +373,7 @@ class habitat:
     def place_plant_objects(self, plant_objects):
 
         for i in plant_objects:
+            self.plants.append(i)
             point = random.randint(0, len(self.available_list)-1)
             #print(self.available_list[point][0], self.available_list[point][1])
             (self.map[self.available_list[point][0]][self.available_list[point][1]]) = i
@@ -374,21 +400,25 @@ class habitat:
 "**********************************************************************************************************************"
 class plant:  #FIXME starting with just one species and assuming that all animals can eat it, add impact of temperature, seasons, etc
     # FIXME add light
-    def __init__(self, width, average_height, weekly_growth, weekly_water_needs, nutrient_needs, minimum_height, number_seeds, seed_distribution, cover_provided):
+    def __init__(self, average_width, average_height, weekly_growth, weekly_water_needs, nutrient_needs, minimum_height, number_seeds, seed_distribution, cover_provided, mature):
         self.alive = True
-        self.width = random.randint(5*width, 15*width)/10
+        self.width = random.randint(5*average_width, 15*average_width)/10
         self.height = random.randint(75 * average_height, 125 * average_height)/100
         self.weekly_growth_average = weekly_growth
         #self.density = density # number of plants per square foot  # mayve do this in a more metal place????
         self.water_needs = random.randint(9*weekly_water_needs, 11*weekly_water_needs)/10
         self.nutrient_needs = nutrient_needs
         self.minimum_height = random.randint(75*minimum_height, 125*minimum_height)/100
-        pollinated = random.randint(0,1)
-        if pollinated == 1:
-            self.pollinated = True
+        if mature == True:
+            pollinated = random.randint(0,1)
+            if pollinated == 1:
+                self.pollinated = True
+            else:
+                self.pollinated = False
         else:
             self.pollinated = False
-        self.number_seeds = random.randint(75*number_seeds, 125*number_seeds)/100
+
+        self.number_seeds = int(random.randint(75*number_seeds, 125*number_seeds)/100)
         self.seed_distribution = random.randint(5*seed_distribution, 15*seed_distribution)/10
         self.cover_provided = cover_provided*((self.width*self.height)/100)  # percent cover provided per inch of height
         self.water_log = []        # currently on a two week set up, make variable later.
@@ -397,39 +427,30 @@ class plant:  #FIXME starting with just one species and assuming that all animal
 
 
 
-    def growth(self, day):  # done at the end of each week
-        counter = 0
-      #  print(self.water_log)
-        for i in range(day-7, day):
-            #print(i)
-            n = self.water_log[i]
-            #print(n)
-            counter = counter + n
-       # print("counter", counter)
-       # print(self.water_needs)
-        weekly_water = counter
+    def growth(self, weekly_water):  # done at the end of each week
         if self.drought_status == True:  # did not get enough water last week
             if weekly_water < self.water_needs:  # not enough water for 2 weeks in a row, dead
                 self.alive = False
-                #print("1")
+                return 0
             else:
                 self.drought_status = False  # enough water, growth
                 growth =  random.randint(75*self.weekly_growth_average, 125*self.weekly_growth_average)/100
-                print("growth", growth)
+               # print("growth", growth)
                 self.height = self.height + growth /2
                 self.width = self.width + growth /2
-                #print("2")
+                return growth
         else:  # not currently in a state of drought
             if weekly_water < self.water_needs:  # not enough water, into drought
                 self.drought_status = True
-                #print("3")
+                return 0
             else:
                 self.drought_status = False    # enough water, growth
                 growth = random.randint(75 * self.weekly_growth_average, 125 * self.weekly_growth_average) / 100
-                print(growth)
+                #print(growth)
                 self.height = self.height + growth / 2
                 self.width = self.width + growth / 2
-                # print("4")
+                return growth
+
 
     def print1(self):
         print("yeeeeeeee")
@@ -438,7 +459,7 @@ class plant:  #FIXME starting with just one species and assuming that all animal
         self.height = self.height * amount_eaten
         if self.height < self.minimum_height:
             self.alive = False
-        print("hereherehere", amount_eaten)
+        #print("hereherehere", amount_eaten)
 
 
 "**********************************************************************************************************************"
