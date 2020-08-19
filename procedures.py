@@ -9,7 +9,7 @@ from main import *
 def create_creatures(number, map, name):
     my_creatures = []
     for i in range(number):
-        my_creatures.append(species(map,80,10,150,20,8,10,3,[], ["P"],5,10,100,100,100,100,100,100,100, True, False, name, 10, False))
+        my_creatures.append(species(map,80,10,150,20,2,10,3,[], ["P"],5,10,100,100,100,100,100,100,100, True, False, name, 10, False))
     return my_creatures
     #for animal in my_creatures:
        # animal.print()
@@ -41,10 +41,7 @@ def create_habitat(plants):
 def make_weather():
     weather1 = weather(50, 2, 90)
     #weather1.daily_weather()
-    weekly_weather = []
-    for i in range(7):
-        weekly_weather.append(weather1.daily_weather())
-    return weekly_weather
+    return weather1
 
 "**********************************************************************************************************************"
 def make_plants(number):
@@ -129,23 +126,34 @@ def animal_day(creature, map):
 def plant_week(plants, map, weather): #FIXME add sunlight needs
     #for i in plants:
        # print(i.water_needs)
-    print(map.map)
+    weekly_weather = []
+    for i in range(7):
+        weekly_weather.append(weather.daily_weather())
+
+    weekly_sun = []
+    for i in range(7):
+        weekly_sun.append(weather.sun_level_daily)
+
+    #print(map.map)
     rain_counter = 0
-    for i in weather:
+    for i in weekly_weather:
         rain_counter = rain_counter + i
+
+    sun_counter = 0
+    for i in weekly_sun:
+        sun_counter = sun_counter + i
+    growth_amount = 0
+
     for plant1 in plants:
         if plant1.alive == True:
+            if sun_counter > weather.average_sun_levels / 20:
             #print("new plant")
             #print(plant1.height)
-            growth_amount = plant1.growth(rain_counter)
+                growth_amount = plant1.growth(rain_counter)
             #print(plant1.height)
-            if plant1.pollinated == True:
+            if plant1.pollinated == True and sun_counter > weather.average_sun_levels / 20:
+                plant.reproduce(plant1, map)
                 #print("seeds", plant1.number_seeds)
-                baby_plants = []
-                for i in range(plant1.number_seeds):
-                    baby_plants.append(plant(3,3,1,6,90,1,12,30,8, False))
-                    map.place_plant_objects(baby_plants)
-                plant1.pollinated = False
            # print(growth_amount)
             if growth_amount > 0:
                 pollination_status = random.randint(0,1)
@@ -158,7 +166,7 @@ def plant_week(plants, map, weather): #FIXME add sunlight needs
 
 
 
-                    ### then place them on the map somehwere
+
 "**********************************************************************************************************************"
 
 
@@ -168,7 +176,7 @@ def main():
    #     print(i.alive)
     map = (create_habitat(plants))  # making the habitat using the plants
     all_creatures = []
-    rabbits = create_creatures(10, map, "rabbit")  # making 20 creatures using the map
+    rabbits = create_creatures(10, map, "rabbit")  # making 20 creatures using the map #FIXME make this easier to set up different creatures
     for i in rabbits:
         all_creatures.append(i)
 
@@ -178,11 +186,24 @@ def main():
     for week in range(3):
         for day in range(7):  # a week
             for animal in all_creatures:
-                new_creatures = animal_day(animal, map) # doing the daily movements each day # FIXME add drinking
-                # FIXME add plant daily motions ex. growth, reproduction
-                if new_creatures != 0:
-                    for i in new_creatures:
-                        all_creatures.append(i)
+                if animal.alive == True:
+                    new_creatures = animal_day(animal, map) # doing the daily movements each day # FIXME add drinking
+                    if new_creatures != 0:
+                        for i in new_creatures:
+                            all_creatures.append(i)
+                    animal.age_days = animal.age_days + 1
+        for i in all_creatures:
+            if i.alive == True:
+                weekly_food_counter = 0
+                for food in i.food_history:
+                    weekly_food_counter = weekly_food_counter + food
+                print(weekly_food_counter, i.food_needs)
+                #print("total food", i.food_history, weekly_food_counter)
+                weekly_water_counter = 0
+                for drink in i.water_history:
+                    weekly_water_counter = weekly_water_counter + drink
+                i.update_status(weekly_food_counter, weekly_water_counter)
+
         plant_week(plants, map, make_weather())  # plant week
     print(len(all_creatures))
     #print(hi)
@@ -195,7 +216,7 @@ def main():
     #make_weather()
 
     #print("test")
-
+# fixme make baby creatures dependent on mothers/ make this an option
 
 
 main()

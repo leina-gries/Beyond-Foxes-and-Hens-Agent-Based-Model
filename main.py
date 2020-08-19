@@ -15,9 +15,19 @@ class species:
 
 
         self.odds_maturing_to_adult = odds_maturing_to_adult
+        if new_generation == True:
+            survival = random.randint(0,100)
+            if survival <= odds_maturing_to_adult:
+                self.personal_maximum_age_days = (av_max_age * random.randint(85, 115) / 100) * 365
+            else:
+                self.personal_maximum_age_days = random.randint(0,adult_age*365)
+
+
         # age, alive or dead
+
         if new_generation == False:
             self.age = random.randint(0, av_max_age)
+            self.personal_maximum_age_days = (av_max_age * random.randint(85, 115) / 100) * 365
         else:
             self.age = 1/365
 
@@ -37,6 +47,7 @@ class species:
         """
         self.age_days = self.age * 365
         self.number_of_offspring = number_of_offspring
+        self.alive = True #fixme add in creatures not surviving to adulthoood?
 
         #print(self.alive)
         # make all of these actual stats a bell curve distribution later
@@ -98,7 +109,6 @@ class species:
 
         self.annual_growth_rate = annual_growth_rate
 
-        self.personal_maximum_age = av_max_age * random.randint(85,115)/100
         #print(self.personal_maximum_age)
 
         self.herbivore = herbivore
@@ -113,10 +123,13 @@ class species:
         #print(self.location)
 
         self.name = name
-        self.av_adult_weight = av_adult_weight
-        self.av_max_age = av_max_age
+        self.adult_weight = random.randint(int(0.70*av_adult_weight), int(1.3*av_adult_weight))
+        self.max_age  = random.randint(int(0.70*av_max_age), int(1.3*av_max_age))
         self.av_speed = av_speed
         self.av_range = av_range
+        self.minimum_weight = random.randint(int(0.4*self.adult_weight), int(0.8*self.adult_weight))
+
+        self.drought_status = False
 
 
 
@@ -161,6 +174,14 @@ class species:
                     plant1.be_eaten(amount_eaten)
             else:
                 pass
+
+        if self.map.map[self.location[0] - 1][self.location[1] - 1] == "R":
+            #print("water", self.map.map[self.location[0]-1][self.location[1]-1])
+            self.water_history.append(self.water_needs/7)  # each time they find water, they drink a day's worth
+        if self.map.map[self.location[0] - 1][self.location[1] - 1] == "W":
+            #print("water1", self.map.map[self.location[0] - 1][self.location[1] - 1])
+            self.water_history.append(self.water_needs / 7)  # each time they find water, they drink a day's worth
+
                 #self.food_history.append("no plant here.")
 
         ###print(self.map.map[self.location[0][self.location[1]]])
@@ -169,12 +190,39 @@ class species:
     def birth(self, number_of_offspring):
         baby_list = []
         for i in range(number_of_offspring):
-            baby_list.append(species(self.map, self.odds_maturing_to_adult, self.adult_age, self.av_adult_weight, self.av_max_age, self.annual_growth_rate,
+            baby_list.append(species(self.map, self.odds_maturing_to_adult, self.adult_age, self.adult_weight, self.max_age, self.annual_growth_rate,
                      self.gestation_period, self.dependency_time,
                      self.predators, self.prey, self.av_speed, self.av_range, self.vision, self.sound, self.smell, self.temp_min, self.temp_max, self.water_needs,
                         self.food_needs, self.herbivore, self.carnivore, self.name, self.number_of_offspring, True))
         print("list from main", baby_list)
         return baby_list
+
+
+    def growth_weekly(self):
+        if self.weight < self.adult_weight:
+            self.weight = self.weight * (1/52)*self.annual_growth_rate
+    def lose_weight(self):
+        self.weight = self.weight * 0.9
+
+    def update_status(self, weekly_food_counter, weekly_water_counter):
+        if weekly_food_counter < self.food_needs:
+            self.lose_weight()
+            #print(self, "loosing weight")
+        else:
+            if weekly_water_counter > self.water_needs:
+                self.growth_weekly()
+        if self.weight < self.minimum_weight:
+            self.alive = False
+        if self.age_days >= self.personal_maximum_age_days:
+            self.alive = False
+        if weekly_water_counter < self.water_needs *0.25:  # CHANGE THIS TO IMPACT DROUGHT TOLERANCE
+            self.alive = False
+        if weekly_water_counter < self.water_needs and self.drought_status == True:
+            self.alive = False
+        if weekly_water_counter > self.water_needs*0.25 and weekly_water_counter < self.water_needs:
+            self.drought_status = True
+
+
 
 
 
@@ -401,15 +449,19 @@ class habitat:
 class plant:  #FIXME starting with just one species and assuming that all animals can eat it, add impact of temperature, seasons, etc
     # FIXME add light
     def __init__(self, average_width, average_height, weekly_growth, weekly_water_needs, nutrient_needs, minimum_height, number_seeds, seed_distribution, cover_provided, mature):
+
+
         self.alive = True
-        self.width = random.randint(5*average_width, 15*average_width)/10
-        self.height = random.randint(75 * average_height, 125 * average_height)/100
-        self.weekly_growth_average = weekly_growth
         #self.density = density # number of plants per square foot  # mayve do this in a more metal place????
-        self.water_needs = random.randint(9*weekly_water_needs, 11*weekly_water_needs)/10
-        self.nutrient_needs = nutrient_needs
-        self.minimum_height = random.randint(75*minimum_height, 125*minimum_height)/100
-        if mature == True:
+        self.minimum_height = random.randint(int(75*minimum_height), int(125*minimum_height))/100
+        self.mature = mature
+
+        if self.mature == True:
+            self.nutrient_needs = nutrient_needs
+            self.weekly_growth_average = weekly_growth
+            self.width = random.randint(int(5 * average_width), int(15 * average_width)) / 10
+            self.height = random.randint(int(75 * average_height), int(125 * average_height)) / 100
+            self.water_needs = random.randint(int(9 * weekly_water_needs), int(11 * weekly_water_needs)) / 10
             pollinated = random.randint(0,1)
             if pollinated == 1:
                 self.pollinated = True
@@ -417,17 +469,39 @@ class plant:  #FIXME starting with just one species and assuming that all animal
                 self.pollinated = False
         else:
             self.pollinated = False
+            self.nutrient_needs = nutrient_needs /10
+            self.weekly_growth_average = weekly_growth * 2
+            self.width = random.randint(int(5 * average_width), int(15 * average_width)) / 100
+            self.height = random.randint(int(75 * average_height), int(125 * average_height)) / 1000
+            self.water_needs = random.randint(int(9 * weekly_water_needs), int(11 * weekly_water_needs)) / 100
 
-        self.number_seeds = int(random.randint(75*number_seeds, 125*number_seeds)/100)
-        self.seed_distribution = random.randint(5*seed_distribution, 15*seed_distribution)/10
+        self.number_seeds = int(random.randint(int(75*number_seeds), int(125*number_seeds))/100)
+        self.seed_distribution = random.randint(int(5*seed_distribution), int(15*seed_distribution))/10
         self.cover_provided = cover_provided*((self.width*self.height)/100)  # percent cover provided per inch of height
         self.water_log = []        # currently on a two week set up, make variable later.
         self.nutrient_log =[]
         self.drought_status = False
 
+        self.average_width = average_width
+        self.average_height = average_height
+        self.weekly_growth = weekly_growth
+        self.weekly_water_needs = weekly_water_needs
+
+
 
 
     def growth(self, weekly_water):  # done at the end of each week
+        if self.mature == False:
+            if self.height >= self.average_height:
+                self.mature = True
+                pollinated = random.randint(0, 1)
+                if pollinated == 1:
+                    self.pollinated = True
+                else:
+                    self.pollinated = False
+            else:
+                self.mature = False
+
         if self.drought_status == True:  # did not get enough water last week
             if weekly_water < self.water_needs:  # not enough water for 2 weeks in a row, dead
                 self.alive = False
@@ -452,6 +526,8 @@ class plant:  #FIXME starting with just one species and assuming that all animal
                 return growth
 
 
+
+
     def print1(self):
         print("yeeeeeeee")
 
@@ -460,6 +536,12 @@ class plant:  #FIXME starting with just one species and assuming that all animal
         if self.height < self.minimum_height:
             self.alive = False
         #print("hereherehere", amount_eaten)
+    def reproduce(self, map):
+        baby_plants = []  # fixme make plant replication seasonal
+        for i in range(self.number_seeds):
+            baby_plants.append(plant(self.average_width, self.average_height, self.weekly_growth, self.weekly_water_needs, self.nutrient_needs, self.minimum_height, self.number_seeds, self.seed_distribution, self.cover_provided, False))
+            map.place_plant_objects(baby_plants)
+        self.pollinated = False
 
 
 "**********************************************************************************************************************"
