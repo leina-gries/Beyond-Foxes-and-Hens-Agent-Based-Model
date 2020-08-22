@@ -8,32 +8,33 @@ class species:
     # add growth later...
     # make preset models later too with types of species ie wolf rabbit, so they don't have to add all the variables
     # odds maturing should be a number between 1 and 100 representing percentage survived to adulthood
+    # adult age is age of maturation
     def __init__(self, map, odds_maturing_to_adult, adult_age, av_adult_weight, av_max_age, annual_growth_rate,
                  gestation_period, dependency_time,
                  predators, prey, av_speed, av_range, vision, sound, smell, temp_min, temp_max, water_needs,
                  food_needs, herbivore, carnivore, name, number_of_offspring, new_generation):
 
-
+        #FIXME make all ages in days?
         self.odds_maturing_to_adult = odds_maturing_to_adult
         if new_generation == True:
             survival = random.randint(0,100)
             if survival <= odds_maturing_to_adult:
                 self.personal_maximum_age_days = (av_max_age * random.randint(85, 115) / 100) * 365
             else:
-                self.personal_maximum_age_days = random.randint(0,adult_age*365)
+                self.personal_maximum_age_days = random.randint(0,int(adult_age*365))
 
 
         # age, alive or dead
+        self.max_age = av_max_age
 
         if new_generation == False:
-            self.age = random.randint(0, av_max_age)
+            self.age_days = random.randint(1, av_max_age*365)
             self.personal_maximum_age_days = (av_max_age * random.randint(85, 115) / 100) * 365
         else:
-            self.age = 1/365
+            self.age_days = 1/365
 
         #print("age", self.age, "age of maturation", adult_age)
 
-        #fixme add in creatures not surviving through maturity
         """  
         if self.age < adult_age:  # if they are not mature yet
             x = random.randint(1,100)
@@ -45,9 +46,8 @@ class species:
         else:
             self.alive = True
         """
-        self.age_days = self.age * 365
         self.number_of_offspring = number_of_offspring
-        self.alive = True #fixme add in creatures not surviving to adulthoood?
+        self.alive = True #
 
         #print(self.alive)
         # make all of these actual stats a bell curve distribution later
@@ -82,7 +82,7 @@ class species:
         # determining fertility
         self.pregnancy = False
         if self.gender == "Female":
-            if self.age >= av_max_age - (av_max_age/10): # could be fine tuned to a species
+            if self.age_days >= (av_max_age - (av_max_age/10)) * 365: # could be fine tuned to a species
                 self.fertility = False
             else:
                 self.fertility = True
@@ -97,11 +97,13 @@ class species:
 
 
         # determining weight - not based on food......
-        if self.age >= adult_age:
+        if self.age_days >= adult_age * 365:
             self.weight = av_adult_weight * random.randint(70,130)/100
+            self.mature = False
         else:
-            ratio = self.age / adult_age
+            ratio = self.age_days / (adult_age * 365)
             self.weight = av_adult_weight * ratio
+            self.mature = True
             # add birth weight later so weight is never zero
 
         #print(self.weight)
@@ -124,17 +126,20 @@ class species:
 
         self.name = name
         self.adult_weight = random.randint(int(0.70*av_adult_weight), int(1.3*av_adult_weight))
-        self.max_age  = random.randint(int(0.70*av_max_age), int(1.3*av_max_age))
+
         self.av_speed = av_speed
         self.av_range = av_range
         self.minimum_weight = random.randint(int(0.4*self.adult_weight), int(0.8*self.adult_weight))
 
         self.drought_status = False
+        self.death_cause = False
+        self.losing_weight = False
+        self.weight_difference = 0
 
 
 
     def print(self):
-        print("age is ", self.age)   # FIXME Make ages follow a more realistic distribution
+        print("age is ", self.age_days)   # FIXME Make ages follow a more realistic distribution
         print("age in days is", self.age_days)
         print("status is", self.alive)
         print("speed is", self.speed)
@@ -168,19 +173,20 @@ class species:
                # print(plant)
                 plant1 = self.map.map[self.location[0]-1][self.location[1]-1]
                 if plant1.alive == True:
-                    amount_eaten = random.randint(0, int(plant1.height))/plant1.height
+                    height_eaten = random.randint(int(plant1.height/5), int(plant1.height))/plant1.height
+                    amount_eaten = height_eaten * plant1.width
                 #print("amount eaten", amount_eaten)
                     self.food_history.append(amount_eaten)
-                    plant1.be_eaten(amount_eaten)
+                    plant1.be_eaten(height_eaten)
             else:
                 pass
 
         if self.map.map[self.location[0] - 1][self.location[1] - 1] == "R":
             #print("water", self.map.map[self.location[0]-1][self.location[1]-1])
-            self.water_history.append(self.water_needs/7)  # each time they find water, they drink a day's worth
+            self.water_history.append(self.water_needs/ (7/3))  # each time they find water, they drink a day's worth
         if self.map.map[self.location[0] - 1][self.location[1] - 1] == "W":
             #print("water1", self.map.map[self.location[0] - 1][self.location[1] - 1])
-            self.water_history.append(self.water_needs / 7)  # each time they find water, they drink a day's worth
+            self.water_history.append(self.water_needs / (7/3))  # each time they find water, they drink a day's worth
 
                 #self.food_history.append("no plant here.")
 
@@ -194,31 +200,46 @@ class species:
                      self.gestation_period, self.dependency_time,
                      self.predators, self.prey, self.av_speed, self.av_range, self.vision, self.sound, self.smell, self.temp_min, self.temp_max, self.water_needs,
                         self.food_needs, self.herbivore, self.carnivore, self.name, self.number_of_offspring, True))
-        print("list from main", baby_list)
+            #print("new baby animal here !!!!!!!!!!")
+        #print("list from main", baby_list)
+
         return baby_list
 
 
     def growth_weekly(self):
         if self.weight < self.adult_weight:
-            self.weight = self.weight * (1/52)*self.annual_growth_rate
+            self.weight = self.weight * (1/52)*self.annual_growth_rate #FIXME make food required relative to weight
+
     def lose_weight(self):
-        self.weight = self.weight * 0.9
+        if self.losing_weight == False: #FIXME MAKE MARGINS MORE REALISTIC can be losing weight for a while but die with no food
+            self.weight_difference = self.weight - self.minimum_weight
+            self.weight = self.weight - (self.weight_difference/2)
+            self.losing_weight = True
+        else:
+            self.weight = self.weight - (self.weight_difference / 2)
+            self.alive = False
+            self.death_cause = "lost too much weight"
 
     def update_status(self, weekly_food_counter, weekly_water_counter):
         if weekly_food_counter < self.food_needs:
             self.lose_weight()
             #print(self, "loosing weight")
         else:
+            self.losing_weight = False
             if weekly_water_counter > self.water_needs:
                 self.growth_weekly()
-        if self.weight < self.minimum_weight:
-            self.alive = False
+        #if self.weight < self.minimum_weight and self.age:
+        #    self.alive = False
+        #    self.death_cause = "starvation"
         if self.age_days >= self.personal_maximum_age_days:
             self.alive = False
+            self.death_cause = "age"
         if weekly_water_counter < self.water_needs *0.25:  # CHANGE THIS TO IMPACT DROUGHT TOLERANCE
             self.alive = False
+            self.death_cause = "dehydration"
         if weekly_water_counter < self.water_needs and self.drought_status == True:
             self.alive = False
+            self.death_cause = "dehydration"
         if weekly_water_counter > self.water_needs*0.25 and weekly_water_counter < self.water_needs:
             self.drought_status = True
 
@@ -487,6 +508,8 @@ class plant:  #FIXME starting with just one species and assuming that all animal
         self.weekly_growth = weekly_growth
         self.weekly_water_needs = weekly_water_needs
 
+        self.death_cause = False
+
 
 
 
@@ -505,6 +528,7 @@ class plant:  #FIXME starting with just one species and assuming that all animal
         if self.drought_status == True:  # did not get enough water last week
             if weekly_water < self.water_needs:  # not enough water for 2 weeks in a row, dead
                 self.alive = False
+                self.death_cause = "plant drought"
                 return 0
             else:
                 self.drought_status = False  # enough water, growth
@@ -535,13 +559,16 @@ class plant:  #FIXME starting with just one species and assuming that all animal
         self.height = self.height * amount_eaten
         if self.height < self.minimum_height:
             self.alive = False
+            self.death_cause = "eaten"
         #print("hereherehere", amount_eaten)
     def reproduce(self, map):
         baby_plants = []  # fixme make plant replication seasonal
         for i in range(self.number_seeds):
+            #print("new plant")
             baby_plants.append(plant(self.average_width, self.average_height, self.weekly_growth, self.weekly_water_needs, self.nutrient_needs, self.minimum_height, self.number_seeds, self.seed_distribution, self.cover_provided, False))
             map.place_plant_objects(baby_plants)
         self.pollinated = False
+        return baby_plants
 
 
 "**********************************************************************************************************************"
