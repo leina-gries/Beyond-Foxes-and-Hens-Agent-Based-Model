@@ -9,7 +9,7 @@ from main import *
 def create_creatures(number, map, name):
     my_creatures = []
     for i in range(number):
-        my_creatures.append(species(map,90,0.5,5,2,2,15,3,[], ["P"],5,100,100,100,100,100,100,100,5, True, False, name, 8, False))
+        my_creatures.append(species(map,90,0.5,5,2,2,15,3,[], ["P"],10,100,100,100,100,100,100,100,5, True, False, name, 8, False))
     return my_creatures
     #for animal in my_creatures:
        # animal.print()
@@ -19,9 +19,9 @@ def create_creatures(number, map, name):
 
 "**********************************************************************************************************************"
 def create_habitat(plants):
-    yes = habitat(1000,10,20, [True,50,10], 100,100,80,40,20,10)
+    yes = habitat(5000,10,20, [True,80,20], 100,100,80,40,20,10)
     yes.create_map()
-    yes.place_rivers() #FIXME add extra river placement if it is needed
+    yes.place_rivers()
 
 
     yes.create_random_shelter_units()
@@ -182,7 +182,7 @@ def main():
    #     print(i.alive)
     map = (create_habitat(plants))  # making the habitat using the plants
     all_creatures = []
-    rabbits = create_creatures(40, map, "rabbit")  # making 20 creatures using the map #FIXME make this easier to set up different creatures
+    rabbits = create_creatures(20, map, "rabbit")  # making 20 creatures using the map #FIXME make this easier to set up different creatures
     for i in rabbits:
         all_creatures.append(i)
 
@@ -191,7 +191,7 @@ def main():
     print(len(all_creatures))
     rabbit_history = [len(rabbits)]
     plant_history = [len(plants)]
-    for week in range(150):
+    for week in range(52):
         print(week, "week")
         for day in range(7):  # a week
             for animal in all_creatures:

@@ -168,18 +168,23 @@ class species:
         #print(self.map.map[0][1])
         #print(self.location)
         #print(self.location[0], self.location[1])
-        if self.herbivore == True:
-            if type(self.map.map[self.location[0]-1][self.location[1]-1]) == plant:
-               # print(plant)
-                plant1 = self.map.map[self.location[0]-1][self.location[1]-1]
-                if plant1.alive == True:
-                    height_eaten = random.randint(int(plant1.height/5), int(plant1.height))/plant1.height
-                    amount_eaten = height_eaten * plant1.width
-                #print("amount eaten", amount_eaten)
-                    self.food_history.append(amount_eaten)
-                    plant1.be_eaten(height_eaten)
-            else:
-                pass
+        weekly_food_counter = 0
+        for i in self.food_history:
+            weekly_food_counter = weekly_food_counter + i
+        if weekly_food_counter < self.food_needs:
+            if self.herbivore == True:
+                if type(self.map.map[self.location[0]-1][self.location[1]-1]) == plant:
+                   # print(plant)
+                    plant1 = self.map.map[self.location[0]-1][self.location[1]-1]
+                    if plant1.alive == True:
+
+                        height_eaten = random.randint(int(plant1.height/5), int(plant1.height))/plant1.height
+                        amount_eaten = height_eaten * plant1.width
+                    #print("amount eaten", amount_eaten)
+                        self.food_history.append(amount_eaten)
+                        plant1.be_eaten(height_eaten)
+                else:
+                    pass
 
         if self.map.map[self.location[0] - 1][self.location[1] - 1] == "R":
             #print("water", self.map.map[self.location[0]-1][self.location[1]-1])
@@ -242,7 +247,6 @@ class species:
             self.death_cause = "dehydration"
         if weekly_water_counter > self.water_needs*0.25 and weekly_water_counter < self.water_needs:
             self.drought_status = True
-
 
 
 
