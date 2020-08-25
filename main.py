@@ -154,7 +154,7 @@ class species:
 
 
     def day(self):
-        self.age_days = self.age_days + 1
+        pass
 
     def step(self, height_change, width_change):
         #print(self.age, self.location)
@@ -179,12 +179,13 @@ class species:
                     if plant1.alive == True:
 
                         height_eaten = random.randint(int(plant1.height/5), int(plant1.height))/plant1.height
+                        if height_eaten ==0:
+                            height_eaten = 1
                         amount_eaten = height_eaten * plant1.width
+                        print("i ate", self, self.age_days, amount_eaten, self.food_needs, self.location, plant1.height, plant1.minimum_height)
                     #print("amount eaten", amount_eaten)
                         self.food_history.append(amount_eaten)
                         plant1.be_eaten(height_eaten)
-                else:
-                    pass
 
         if self.map.map[self.location[0] - 1][self.location[1] - 1] == "R":
             #print("water", self.map.map[self.location[0]-1][self.location[1]-1])
@@ -560,11 +561,12 @@ class plant:  #FIXME starting with just one species and assuming that all animal
         print("yeeeeeeee")
 
     def be_eaten(self, amount_eaten):
-        self.height = self.height * amount_eaten
+        self.height = self.height * (1- amount_eaten)
         if self.height < self.minimum_height:
             self.alive = False
             self.death_cause = "eaten"
         #print("hereherehere", amount_eaten)
+
     def reproduce(self, map):
         baby_plants = []  # fixme make plant replication seasonal
         for i in range(self.number_seeds):

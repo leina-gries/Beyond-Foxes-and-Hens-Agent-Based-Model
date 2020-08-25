@@ -19,7 +19,7 @@ def create_creatures(number, map, name):
 
 "**********************************************************************************************************************"
 def create_habitat(plants):
-    yes = habitat(5000,10,20, [True,80,20], 100,100,80,40,20,10)
+    yes = habitat(2000,10,20, [True,80,20], 100,100,80,40,20,10)
     yes.create_map()
     yes.place_rivers()
 
@@ -62,6 +62,7 @@ def animal_day(creature, map):
     # print(creature)
     #print("width", map.width)
     #print("length", map.length)
+
     for i in range(int(creature.range)):
      #   print("my range is", creature.range)
         length_step = random.randint(-1,1)
@@ -177,12 +178,12 @@ def plant_week(plants, map, weather): #FIXME add sunlight needs
 
 
 def main():
-    plants = make_plants(600)  # making plants
+    plants = make_plants(200)  # making plants
    # for i in plants:
    #     print(i.alive)
     map = (create_habitat(plants))  # making the habitat using the plants
     all_creatures = []
-    rabbits = create_creatures(20, map, "rabbit")  # making 20 creatures using the map #FIXME make this easier to set up different creatures
+    rabbits = create_creatures(50, map, "rabbit")  # making 20 creatures using the map #FIXME make this easier to set up different creatures
     for i in rabbits:
         all_creatures.append(i)
 
@@ -209,6 +210,7 @@ def main():
                     weekly_food_counter = weekly_food_counter + food
                 #print(weekly_food_counter, i.food_needs)
                 #print("total food", i.food_history, weekly_food_counter)
+                i.food_history = []
                 weekly_water_counter = 0
                 for drink in i.water_history:
                     weekly_water_counter = weekly_water_counter + drink
@@ -219,6 +221,7 @@ def main():
             else:
                 print(i.death_cause)
         rabbit_history.append(rabbit_counter)
+        print("rabbits", rabbit_counter)
 
         more_plants = plant_week(plants, map, make_weather())  # plant week
         for i in more_plants:
@@ -231,6 +234,7 @@ def main():
                 print(i.death_cause)
         #print("plants", weekly_plant_counter)
         plant_history.append(weekly_plant_counter)
+        print("plants", weekly_plant_counter)
 
             #print(creature)
     print("done")
