@@ -18,10 +18,11 @@ class species:
         self.odds_maturing_to_adult = odds_maturing_to_adult
         if new_generation == True:
             survival = random.randint(0,100)
-            if survival <= odds_maturing_to_adult:
-                self.personal_maximum_age_days = (av_max_age * random.randint(85, 115) / 100) * 365
+            if survival > odds_maturing_to_adult:
+                self.personal_maximum_age_days = (adult_age * random.randint(85, 115) / 100) * 365
+                print(survival, self.personal_maximum_age_days, "baby will die eaely here")
             else:
-                self.personal_maximum_age_days = random.randint(0,int(adult_age*365))
+                self.personal_maximum_age_days = (av_max_age * random.randint(85, 115) / 100) * 365  # fixed?
 
 
         # age, alive or dead
@@ -83,7 +84,8 @@ class species:
         self.pregnancy = False
         if self.gender == "Female":
             if self.age_days >= (av_max_age - (av_max_age/10)) * 365: # could be fine tuned to a species
-                self.fertility = False
+                self.fertility = True
+                #self.fertility = False
             else:
                 self.fertility = True
 
@@ -164,7 +166,7 @@ class species:
         return self.location
 
 
-    def eat(self):  #FIXME don't let animals go into the river.
+    def eat(self, map):  #FIXME don't let animals go into the river.
         #print(self.map.map[0][1])
         #print(self.location)
         #print(self.location[0], self.location[1])
@@ -179,13 +181,22 @@ class species:
                     if plant1.alive == True:
 
                         height_eaten = random.randint(int(plant1.height/5), int(plant1.height))/plant1.height
-                        if height_eaten ==0:
+                        if height_eaten == 0:
                             height_eaten = 1
                         amount_eaten = height_eaten * plant1.width
-                        print("i ate", self, self.age_days, amount_eaten, self.food_needs, self.location, plant1.height, plant1.minimum_height)
+                        #print("i ate", self, self.age_days, amount_eaten, self.food_needs, self.location, plant1.height, plant1.minimum_height)
                     #print("amount eaten", amount_eaten)
                         self.food_history.append(amount_eaten)
                         plant1.be_eaten(height_eaten)
+            else:
+                #print("here!!!!!!!!!!")
+                for species1, location in map.species_placement.items():
+                    #print("here", species1.name)
+                    if self.location == location and self != species:
+                        for i in self.prey:
+                            if i == species1.name:
+                                print("i can eat you!")
+
 
         if self.map.map[self.location[0] - 1][self.location[1] - 1] == "R":
             #print("water", self.map.map[self.location[0]-1][self.location[1]-1])
@@ -205,7 +216,7 @@ class species:
             baby_list.append(species(self.map, self.odds_maturing_to_adult, self.adult_age, self.adult_weight, self.max_age, self.annual_growth_rate,
                      self.gestation_period, self.dependency_time,
                      self.predators, self.prey, self.av_speed, self.av_range, self.vision, self.sound, self.smell, self.temp_min, self.temp_max, self.water_needs,
-                        self.food_needs, self.herbivore, self.carnivore, self.name, self.number_of_offspring, True))
+                        self.food_needs, self.herbivore, self.carnivore, self.name, self.number_of_offspring, False))
             #print("new baby animal here !!!!!!!!!!")
         #print("list from main", baby_list)
 
@@ -213,23 +224,26 @@ class species:
 
 
     def growth_weekly(self):
-        if self.weight < self.adult_weight:
+        if self.weight > self.adult_weight:
             self.weight = self.weight * (1/52)*self.annual_growth_rate #FIXME make food required relative to weight
+        else:
+            self.weight = self.weight * (1/26)*self.annual_growth_rate
 
     def lose_weight(self):
         if self.losing_weight == False: #FIXME MAKE MARGINS MORE REALISTIC can be losing weight for a while but die with no food
-            self.weight_difference = self.weight - self.minimum_weight
-            self.weight = self.weight - (self.weight_difference/2)
+            #self.weight_difference = self.weight - self.minimum_weight
+            #self.weight = self.weight - (self.weight_difference/2)
             self.losing_weight = True
+            print(self, "loosing weight")
         else:
-            self.weight = self.weight - (self.weight_difference / 2)
+            #self.weight = self.weight - (self.weight_difference / 2)
             self.alive = False
+            print(self, "lost too much")
             self.death_cause = "lost too much weight"
 
     def update_status(self, weekly_food_counter, weekly_water_counter):
         if weekly_food_counter < self.food_needs:
             self.lose_weight()
-            #print(self, "loosing weight")
         else:
             self.losing_weight = False
             if weekly_water_counter > self.water_needs:
@@ -502,6 +516,7 @@ class plant:  #FIXME starting with just one species and assuming that all animal
             self.water_needs = random.randint(int(9 * weekly_water_needs), int(11 * weekly_water_needs)) / 100
 
         self.number_seeds = int(random.randint(int(75*number_seeds), int(125*number_seeds))/100)
+        #print(self.number_seeds)
         self.seed_distribution = random.randint(int(5*seed_distribution), int(15*seed_distribution))/10
         self.cover_provided = cover_provided*((self.width*self.height)/100)  # percent cover provided per inch of height
         self.water_log = []        # currently on a two week set up, make variable later.

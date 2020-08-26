@@ -6,10 +6,16 @@ from main import *
 "********************************************    PROCEDURES    ********************************************************"
 
 "**********************************************************************************************************************"
-def create_creatures(number, map, name):
+def create_creatures(number, map, odds_maturing_to_adult, adult_age, av_adult_weight, av_max_age, annual_growth_rate,
+                 gestation_period, dependency_time,
+                 predators, prey, av_speed, av_range, vision, sound, smell, temp_min, temp_max, water_needs,
+                 food_needs, herbivore, carnivore, name, number_of_offspring, new_generation):
     my_creatures = []
     for i in range(number):
-        my_creatures.append(species(map,90,0.5,5,2,2,15,3,[], ["P"],10,100,100,100,100,100,100,100,5, True, False, name, 8, False))
+        my_creatures.append(species(map, odds_maturing_to_adult, adult_age, av_adult_weight, av_max_age, annual_growth_rate,
+                 gestation_period, dependency_time,
+                 predators, prey, av_speed, av_range, vision, sound, smell, temp_min, temp_max, water_needs,
+                 food_needs, herbivore, carnivore, name, number_of_offspring, new_generation))
     return my_creatures
     #for animal in my_creatures:
        # animal.print()
@@ -47,7 +53,7 @@ def make_weather():
 def make_plants(number):
     my_plants = []
     for i in range(number):
-        my_plants.append(plant(6,10,2,6,90,0.5,12,30,8,True))
+        my_plants.append(plant(10,10,2,6,90,2,10,0,8,True)) ## fixme next try printing food history to see if they are still eating, print size of plants, make plants only made ocasionally
     #for i in my_plants:
    #    print(i)
 
@@ -80,6 +86,7 @@ def animal_day(creature, map):
         for species1, location in map.species_placement.items():
             if creature.location == location and creature != species:
                 if creature.name == species1.name:
+                    #print("interaction!")
                     if creature.gender != species1.gender:
                         if creature.gender == "Female":
                             if creature.fertility == True:
@@ -104,7 +111,7 @@ def animal_day(creature, map):
             if creature.location == (map.species_placement[animal_location]):
                 print("wow!!!!", creature.location, creature, map.species_placement[animal_location])
         """
-        creature.eat()
+        creature.eat(map)
     if creature.pregnancy == True:
         #print("pregnant rabbit here ")
         creature.gestation_period_remaining = creature.gestation_period_remaining - 1
@@ -178,50 +185,60 @@ def plant_week(plants, map, weather): #FIXME add sunlight needs
 
 
 def main():
-    plants = make_plants(200)  # making plants
+    plants = make_plants(600)  # making plants
    # for i in plants:
    #     print(i.alive)
     map = (create_habitat(plants))  # making the habitat using the plants
     all_creatures = []
-    rabbits = create_creatures(50, map, "rabbit")  # making 20 creatures using the map #FIXME make this easier to set up different creatures
+    rabbits = create_creatures(20, map,100,0.5,5,2,2,15,3,[], ["P"],37,100,100,100,100,100,100,100,5, True, False, "rabbit", 8, False)  # making 20 creatures using the map #FIXME make this easier to set up different creatures
+    wolves = create_creatures(10, map, 100, 2, 100, 8, 2, 90,90,[], ["rabbit"], 34,1000,100,100,100,0,90,10,1,False, True, "wolf", 5, False)
     for i in rabbits:
+        all_creatures.append(i)
+    for i in wolves:
         all_creatures.append(i)
 
     for i in all_creatures:
         map.species_placement[i] = i.location
     print(len(all_creatures))
+    wolf_history = [len(wolves)]
     rabbit_history = [len(rabbits)]
     plant_history = [len(plants)]
-    for week in range(52):
+    for week in range(20):
         print(week, "week")
         for day in range(7):  # a week
             for animal in all_creatures:
                 if animal.alive == True:
-                    new_creatures = animal_day(animal, map) # doing the daily movements each day # FIXME add drinking
+
+                    new_creatures = animal_day(animal, map) # doing the daily movements each day
                     if new_creatures != 0:
                         for i in new_creatures:
                             all_creatures.append(i)
                     animal.age_days = animal.age_days + 1
         rabbit_counter = 0
+        wolf_counter = 0
         for i in all_creatures:
-            if i.alive == True:
-                weekly_food_counter = 0
-                for food in i.food_history:
-                    weekly_food_counter = weekly_food_counter + food
-                #print(weekly_food_counter, i.food_needs)
-                #print("total food", i.food_history, weekly_food_counter)
-                i.food_history = []
-                weekly_water_counter = 0
-                for drink in i.water_history:
-                    weekly_water_counter = weekly_water_counter + drink
-                i.update_status(weekly_food_counter, weekly_water_counter)
-
             if i.name == "rabbit" and i.alive == True:
                 rabbit_counter = rabbit_counter + 1
-            else:
-                print(i.death_cause)
+            elif i.name == "wolf" and i.alive == True:
+                wolf_counter = wolf_counter + 1
+            if i.alive == True:
+                if i.age_days > 8:
+                    weekly_food_counter = 0
+                    for food in i.food_history:
+                        weekly_food_counter = weekly_food_counter + food
+                    #print(weekly_food_counter, i.food_needs)
+                    #print("total food", i.food_history, weekly_food_counter)
+                    i.food_history = []
+                    weekly_water_counter = 0
+                    for drink in i.water_history:
+                        weekly_water_counter = weekly_water_counter + drink
+                    i.update_status(weekly_food_counter, weekly_water_counter)
+
+
         rabbit_history.append(rabbit_counter)
+        wolf_history.append(wolf_counter)
         print("rabbits", rabbit_counter)
+        print("wolves", wolf_counter)
 
         more_plants = plant_week(plants, map, make_weather())  # plant week
         for i in more_plants:
@@ -231,7 +248,8 @@ def main():
             if i.alive == True:
                 weekly_plant_counter = weekly_plant_counter + 1
             else:
-                print(i.death_cause)
+                pass
+                #print(i.death_cause)
         #print("plants", weekly_plant_counter)
         plant_history.append(weekly_plant_counter)
         print("plants", weekly_plant_counter)
@@ -239,7 +257,10 @@ def main():
             #print(creature)
     print("done")
     print("plants oberall",plant_history)
-    print("animals", rabbit_history)
+
+    print("rabbits", rabbit_history)
+    print("wolves", wolf_history)
+
     #print(hi)
           #  print("starting new animal")
    # for animal in rabbits:
