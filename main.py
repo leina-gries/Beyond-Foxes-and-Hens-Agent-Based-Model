@@ -63,9 +63,12 @@ class species:
         # personal abiities
         self.speed = av_speed * random.randint(75,125)/100
         self.range = av_range * random.randint(75,125)/100
+
         self.vision = vision * random.randint(85,115)/100
         self.sound = sound * random.randint(85,115)/100
         self.smell = smell * random.randint(85,115)/100
+
+        self.coefficient = (self.vision + self.sound + self.smell)/300 + (self.speed* self.range/7)/100
         #print(self.speed, self.range, self.vision, self.sound, self.smell)
 
         self.temp_min = temp_min
@@ -138,6 +141,9 @@ class species:
         self.losing_weight = False
         self.weight_difference = 0
 
+        self.distances_list = []
+        self.closest_distance = []
+
 
 
     def print(self):
@@ -192,11 +198,14 @@ class species:
                 #print("here!!!!!!!!!!")
                 for species1, location in map.species_placement.items():
                     #print("here", species1.name)
-                    if self.location == location and self != species:
-                        for i in self.prey:
-                            if i == species1.name:
-                                print("i can eat you!")
-
+                    if self.location == location and self != species1:
+                        for i in self.prey:  # self is predatory i is species that is the prey
+                            if i[0] == species1.name:
+                                species1.distance_to_shelter(map)  # how close is the prey to shelter?
+                                prey_survival_odds = random.randint(0,100) +((self.coefficient - species1.coefficient) * 1/(species1.closest_distance+1))
+                                if prey_survival_odds > i[1]:
+                                    species1.alive = False
+                                    self.food_history.append(species1.weight)
 
         if self.map.map[self.location[0] - 1][self.location[1] - 1] == "R":
             #print("water", self.map.map[self.location[0]-1][self.location[1]-1])
@@ -264,6 +273,27 @@ class species:
             self.drought_status = True
 
 
+    def distance_to_shelter(self, map):
+        self.distances_list = []
+        for i in map.shelter_placement:
+            length_distance = self.location[0] - i[0]
+            width_distance = self.location[1] - i[1]
+            length_squared = length_distance ** 2
+            width_squared = width_distance ** 2
+            sum = length_squared + width_squared
+            distance = math.sqrt(sum)
+            self.distances_list.append(distance)
+        first = random.randint(0,len(self.distances_list))
+        first_point = self.distances_list[first]
+        second = random.randint(0,len(self.distances_list))
+        second_point = self.distances_list[second]
+        third = random.randint(0,len(self.distances_list))
+        third_point = self.distances_list[third]
+        points_options = [first_point, second_point, third_point]
+        points_options.sort()
+        self.closest_distance = points_options[0]
+
+
 
 
 
@@ -299,6 +329,7 @@ class habitat:
         self.plants = []
 
         self.species_placement = {}
+        self.shelter_placement = []
 
 
     def create_map(self):
@@ -352,6 +383,7 @@ class habitat:
 
         # checking if a space is available
     def place_shelter(self):
+        #print("here!!!!!!", self.width, self.length)
         mini_map = []
         map_holder = []
         for i in self.map:
@@ -363,28 +395,31 @@ class habitat:
         #FIXME MAKE IT SO THE SHELTER CANNOT BE PLACED ON A RIVER EITHER
         #FIXME add in the test is availble
         for i in self.lines_per_clump:
-            width_coordinate = random.randint(0, self.width)
-            length_coordinate = random.randint(0, self.length)
+            width_coordinate = random.randint(1, self.width)
+            length_coordinate = random.randint(1, self.length)
             for j in i:
                 for k in range(j):
-                    if width_coordinate < (self.width) and  length_coordinate < (self.length):
+                    if width_coordinate < (self.width) and length_coordinate < (self.length):
                         if map_holder[length_coordinate-1][width_coordinate-1] == 0:
                             map_holder[length_coordinate-1][width_coordinate-1] = "S"
+                            self.shelter_placement.append([length_coordinate, width_coordinate, "S"])
                         elif map_holder[length_coordinate-1][width_coordinate-1] == "S":
                             map_holder[length_coordinate-1][width_coordinate-1] = "DS"
+                            self.shelter_placement.append([length_coordinate, width_coordinate, "DS"])
                         while map_holder[length_coordinate-1][width_coordinate-1] == "R" or map_holder[length_coordinate-1][width_coordinate-1] == "W":
                             #print("beeo", map_holder[length_coordinate-1][width_coordinate-1])
-                            width_coordinate = random.randint(0, self.width)
-                            length_coordinate = random.randint(0, self.length)
+                            width_coordinate = random.randint(1, self.width)
+                            length_coordinate = random.randint(1, self.length)
                     else:
                        # print("hete")
                         return False
                     width_coordinate = width_coordinate + 1
 
                 length_coordinate = length_coordinate + 1
-                width_coordinate = width_coordinate - j
+            width_coordinate = width_coordinate - j
             #print(x_coordinate, y_coordinate)
         self.map = map_holder
+        #print(self.shelter_placement)
         return True
 
 

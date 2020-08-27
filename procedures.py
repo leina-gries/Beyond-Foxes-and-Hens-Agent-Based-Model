@@ -190,8 +190,8 @@ def main():
    #     print(i.alive)
     map = (create_habitat(plants))  # making the habitat using the plants
     all_creatures = []
-    rabbits = create_creatures(20, map,100,0.5,5,2,2,15,3,[], ["P"],37,100,100,100,100,100,100,100,5, True, False, "rabbit", 8, False)  # making 20 creatures using the map #FIXME make this easier to set up different creatures
-    wolves = create_creatures(10, map, 100, 2, 100, 8, 2, 90,90,[], ["rabbit"], 34,1000,100,100,100,0,90,10,1,False, True, "wolf", 5, False)
+    rabbits = create_creatures(20, map,100,0.5,5,2,2,15,3,[], [["P",0]],37,100,100,100,100,100,100,100,5, True, False, "rabbit", 8, False)  # making 20 creatures using the map #FIXME make this easier to set up different creatures
+    wolves = create_creatures(10, map, 100, 2, 100, 8, 2, 90,90,[], [["rabbit", 30]], 34,1000,100,100,100,0,90,10,1,False, True, "wolf", 5, False)
     for i in rabbits:
         all_creatures.append(i)
     for i in wolves:
@@ -256,7 +256,7 @@ def main():
 
             #print(creature)
     print("done")
-    print("plants oberall",plant_history)
+    print("plants overall",plant_history)
 
     print("rabbits", rabbit_history)
     print("wolves", wolf_history)
