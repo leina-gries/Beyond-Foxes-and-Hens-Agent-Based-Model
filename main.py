@@ -284,7 +284,7 @@ class species:
             #self.weight_difference = self.weight - self.minimum_weight
             #self.weight = self.weight - (self.weight_difference/2)
             self.losing_weight = True
-            print(self, "loosing weight")
+            print(self.name, "loosing weight")
         else:
             #self.weight = self.weight - (self.weight_difference / 2)
             self.alive = False
