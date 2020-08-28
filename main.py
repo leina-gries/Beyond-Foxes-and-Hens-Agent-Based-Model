@@ -1,109 +1,118 @@
 """
-This code is an attempt to work out the classes and perform some basic methods with them.
+This file defines the classes needed to create objects of a given type. It defines species, habitat, plant, and weather
+objects, and what methods can be performed using them. Several models have commented out sections- these represent choices
+the user can make. For example, it is possible to run a more efficient version of the code, or to chose to run a more
+detailed and precise version that takes more processing power to complete. Throughout the code are tips and explanations
+of the methods used.
 """
 import random
 import math
 "**********************************************************************************************************************"
 class species:
-    # add growth later...
-    # make preset models later too with types of species ie wolf rabbit, so they don't have to add all the variables
-    # odds maturing should be a number between 1 and 100 representing percentage survived to adulthood
-    # adult age is age of maturation
+        # map: map on which the creatures are living, habitat object.
+        # odds_maturing_to_adult: number between 0 and 100 reprensenting the percent of creatures that survive to the age of maturity
+        # adult_age: age of maturation, age at which reproduction is possible
+        # av_adult_weight: average weight for an adult of this species
+        # av_max_age: average maximum age (age of natural death) for a creature in this species
+        # annual_growth_rate: factor of increase of weight per year
+        # gestation_period: time between conception and birth, pregnancy duration
+        # predators: species which can eat this creature object
+        # prey: species / plant types which can be eaten
+        # av_speed: average maximum speed
+        # av_range: daily range, number of "steps" taken, more theoretical than directly related to a distance
+        # vision: average eyesight of this species, written as an integer out of 100
+        # sound: average hearing ability of this species, written as an integer out of 100
+        # smell: average sense of smell of this species, written as an integer out of 100
+        # temp_min: minimum survivable temperature for this species
+        # temp_max: maximum surivable temperature for this species
+        # water_needs: quantity of water needed per week
+        # food needs: amount of food needed per week, in square inchess of plant or pound of meat. Meaning customizable
+        # herbivore: True or False, whether this species eats plants or not
+        # carnivore: True or False, whether or not this species hunts any other creatures. Species can be both (onmivores)
+        # name: species name! used for interactions with others and for data collection
+        # number_of_offspring: average number of offspring per pregnancy
+        # new generation: True or False, False when first creating creatures. For any creatures created by in-model replication, True.
+
     def __init__(self, map, odds_maturing_to_adult, adult_age, av_adult_weight, av_max_age, annual_growth_rate,
                  gestation_period, dependency_time,
                  predators, prey, av_speed, av_range, vision, sound, smell, temp_min, temp_max, water_needs,
                  food_needs, herbivore, carnivore, name, number_of_offspring, new_generation):
 
-        #FIXME make all ages in days?
+        # DETERMINING STARTING AGE: THIS IS MAXIMUM LIFESPAN, CREATURES WILL NOT NECESSARILY SURVIVE THIS LONG
         self.odds_maturing_to_adult = odds_maturing_to_adult
-        if new_generation == True:
+        # if not mature, this determines whether a creature will survive to maturity
+        if new_generation == True:  # called when existing objects create more objects through reproduce method
             survival = random.randint(0,100)
-            if survival > odds_maturing_to_adult:
-                self.personal_maximum_age_days = (adult_age * random.randint(85, 115) / 100) * 365
-                print(survival, self.personal_maximum_age_days, "baby will die eaely here")
+            if survival > odds_maturing_to_adult:  # this means they will die before reaching maturity
+                self.personal_maximum_age_days = (adult_age * random.randint(0, 100) / 100) * 365
             else:
+                # otherwise, a random, full lifespan is assigned.
                 self.personal_maximum_age_days = (av_max_age * random.randint(85, 115) / 100) * 365  # fixed?
 
-
-        # age, alive or dead
-        self.max_age = av_max_age
-
-        if new_generation == False:
+        # DETERMINING CURRENT AGE; AGE THE OBJECT WILL BEGIN WITH
+        if new_generation == False:  # randomly assigns an age to each first generation object
             self.age_days = random.randint(1, av_max_age*365)
             self.personal_maximum_age_days = (av_max_age * random.randint(85, 115) / 100) * 365
         else:
-            self.age_days = 1/365
+            self.age_days = 1  # all second generation objects begin life as one day old creatures
 
-        #print("age", self.age, "age of maturation", adult_age)
+        self.alive = True # all creatures begin alive.
 
-        """  
-        if self.age < adult_age:  # if they are not mature yet
-            x = random.randint(1,100)
-            #print(x)
-            if x <= odds_maturing_to_adult:
-                self.alive = True
-            else:
-                self.alive = False
+        # determining sex - can be weighted if a species has an uneven distribution
+        y = random.randint(0,1)
+        if y == 1:
+            self.gender = "Male"  # half are female, half are male
         else:
-            self.alive = True
-        """
-        self.number_of_offspring = number_of_offspring
-        self.alive = True #
+            self.gender = "Female"
 
-        #print(self.alive)
-        # make all of these actual stats a bell curve distribution later
+        # reproduction-related traits
+        self.gestation_period = gestation_period  # period of time between conception and birth
+        self.gestation_period_remaining = gestation_period  # to be updated throughout a "pregnancy"
+        self.number_of_offspring = number_of_offspring # varies for each instance of reproduction, decided later
 
-        self.gestation_period = gestation_period
-        self.gestation_period_remaining = gestation_period
-        self.dependency_time = dependency_time
+        self.dependency_time = dependency_time  # fixme remove this
 
-        self.predators = predators
-        self.prey = prey
+        self.predators = predators # a list of creature types that can eat this one
+        self.prey = prey  # a nested list, each interior list contains a creature name and that creature's odds of survival
 
         # personal abiities
-        self.speed = av_speed * random.randint(75,125)/100
-        self.range = av_range * random.randint(75,125)/100
-
+        self.speed = av_speed * random.randint(75,125)/100  # maximum speed
+        self.range = av_range * random.randint(75,125)/100  # daily range- number of "steps" taken
         self.vision = vision * random.randint(85,115)/100
         self.sound = sound * random.randint(85,115)/100
         self.smell = smell * random.randint(85,115)/100
 
-        self.coefficient = (self.vision + self.sound + self.smell)/300 + (self.speed* self.range/7)/100
-        #print(self.speed, self.range, self.vision, self.sound, self.smell)
+        # this will be used to help determine survival by comparing both species abilities in a predation scenario
+        self.coefficient = (self.vision + self.sound + self.smell)/300 + (self.speed)/100
 
+        # these can be built into the weather to determine the impacts of climate
         self.temp_min = temp_min
         self.temp_max = temp_max
-        self.water_needs = water_needs
-        self.food_needs = food_needs  # weekly food total needed
 
-        # determining gender - can be weighted if a species has an uneven distribution
-        y = random.randint(0,1)
-        if y == 1:
-            self.gender = "Male"
-        else:
-            self.gender = "Female"
-       # print(self.gender)
-        # determining fertility
+        # tracking weekly needs
+        self.water_needs = water_needs # total weekly water amounts needed
+        self.food_needs = food_needs  # weekly food total needed- i.e numbers of plants, pounds of meat
+
+        # determining pregnancy status, to be updated after an interaction
         self.pregnancy = False
         if self.gender == "Female":
+            # females are only fertile if younger than 9/10th of their maximum age in days
             if self.age_days >= (av_max_age - (av_max_age/10)) * 365: # could be fine tuned to a species
-                self.fertility = True
-                #self.fertility = False
+                self.fertility = False
             else:
                 self.fertility = True
 
-        if self.gender == "Male":
+        if self.gender == "Male":  # males are always fertile. NOTE: immature creatures cannot reproduce (see procedures)
             self.fertility = True
-        #print(self.fertility)
 
-        # making an empty dictionary
+        # making an empty list for each of food and water consumption to track these through a week
         self.food_history = [0]
         self.water_history = []
 
 
-        # determining weight - not based on food......
-        if self.age_days >= adult_age * 365:
-            self.weight = av_adult_weight * random.randint(70,130)/100
+        # determining weight: this is the initial weight, it is later impacted by food history, etc.
+        if self.age_days >= adult_age * 365:  # if they are not mature
+            self.weight = av_adult_weight * random.randint(70,130)/100  # weight is based off of
             self.mature = False
         else:
             ratio = self.age_days / (adult_age * 365)
@@ -111,43 +120,62 @@ class species:
             self.mature = True
             # add birth weight later so weight is never zero
 
-        #print(self.weight)
-        self.adult_age = adult_age
-
+        # growth factor per year
         self.annual_growth_rate = annual_growth_rate
 
-        #print(self.personal_maximum_age)
-
+        # species prey type
         self.herbivore = herbivore
         self.carnivore = carnivore
+
+        # the habitat in which creatures live and with which they will interact
         self.map = map
 
-        self.map_for_animals = map.animal_available_list  # this is just the open places where we can originally place an animal
+        # this is just the open places where we can originally place an animal - not in a river, and prechecked places
+        self.map_for_animals = map.animal_available_list
 
-        # chose place for animal
+        # chose place for animal randomly based off of the available list
         self.location = self.map_for_animals[random.randint(0, len(self.map_for_animals)-1)]
-       ### map.species_placement.extend([self, self.location])
-        #print(self.location)
 
+        # age of maturation, to be used later and to be passed on to offspring
+        self.adult_age = adult_age
+        # for the purpose of passing onto the future generations
+        self.max_age = av_max_age
+        # species name
         self.name = name
+
+        # weight if mature, when this is reached, growth slows by a preset factor
         self.adult_weight = random.randint(int(0.70*av_adult_weight), int(1.3*av_adult_weight))
 
+        # to be passed on to future generations. Note: evolution is possible throughout!
+        # Instead of using the original instance variables for future generations, pass on the parents' "genetics" to the
+        # next generation. For example, use self.speed instead of av_speed. The fittest will survive!
         self.av_speed = av_speed
         self.av_range = av_range
+
+        # important! if the creature's weight drops below this, it will die. This has been combined with a number of
+        # weeks a species can go without their necessary amount of food food before dying (preset at 2 weeks.)
         self.minimum_weight = random.randint(int(0.4*self.adult_weight), int(0.8*self.adult_weight))
+        # FIXME update weight loss to be more based on the amount of food they are short from their needs
 
-        self.drought_status = False
-        self.death_cause = False
-        self.losing_weight = False
-        self.weight_difference = 0
+        # these will be updated throughout the course of the model.
+        self.drought_status = False  # when a creature has not gotten enough water for a week (but has had at least 30% of their necessary amount)
+        self.death_cause = False  # reason for death. useful for statistics later
+        self.losing_weight = False  # if a creature has not had enough food in this week, it is losing weight
+        self.weight_difference = 0  # instance variable to be used later in determining status
 
-        self.distances_list = []
-        self.closest_distance = []
-
+        self.distances_list = []  # distances from shelter, updated later
+        self.closest_distance = []  # distance to the closest shelter item
+            # note: there is an option for a more efficient and a less efficient but more precise model. The former
+            # calculated the distances to 5 randomly chosen shelter objects, and returns the most efficient path from these.
+            # The latter calculates all distances, sorts this list, and returns the most efficient path. This one is much
 
 
     def print(self):
-        print("age is ", self.age_days)   # FIXME Make ages follow a more realistic distribution
+        """
+        Just a simple little method to print useful information about the object.
+        :return:
+        """
+        print("age is ", self.age_days)
         print("age in days is", self.age_days)
         print("status is", self.alive)
         print("speed is", self.speed)
@@ -158,53 +186,66 @@ class species:
         print("prey are", self.prey)
         print("predators are", self.predators)
         print("fertility status is", self.fertility)
-        # add number of kids, dependency status, etc
 
-
-    def day(self):
-        pass
 
     def step(self, height_change, width_change):
-        #print(self.age, self.location)
-        self.location[0] = self.location[0]+ height_change
-        self.location[1] = self.location[1]+ width_change
-        #print(self.location)
+        """
+        Step is used many times in a day (determined by range) to move a creature's location. This is how they explore
+        an area and search for food, water, etc.
+        :param height_change: change in height, which means the change in which internal list the creature is in
+        :param width_change: change in position in width, the position inside the specific internal list
+        :return: self.location, the position of the creature on the map as a coordinate pair
+        """
+        self.location[0] = self.location[0]+ height_change  # changing the height (interior list number)
+        self.location[1] = self.location[1]+ width_change  # changing the width (position in interior list)
         return self.location
 
 
-    def eat(self, map):  #FIXME don't let animals go into the river.
-        #print(self.map.map[0][1])
-        #print(self.location)
-        #print(self.location[0], self.location[1])
+    def eat(self, map):  #FIXME don't let animals go into the river, or make this an option.
+        """
+        eat is the method through which all creatures eat. It uses the map to cross reference the creature's position
+        with the position of other creatures and plant objects on the map to determine if the creature can eat anything
+        in their position. It only does this if the creature has not already eaten their required food intake for the
+        week, in an attempt to leave more food for other creatures. This can be modified to allow a creature to eat a
+        given amount above their necessary food intake. It also tracks water intake.
+        :param map: the map on which the creatures are located and interacting with other objects
+        :return: nothing, amends the self.food_history instance variable.
+        """
+        # counting the total amount of food eaten so far this week.
         weekly_food_counter = 0
-        for i in self.food_history:
-            weekly_food_counter = weekly_food_counter + i
-        if weekly_food_counter < self.food_needs:
-            if self.herbivore == True:
-                if type(self.map.map[self.location[0]-1][self.location[1]-1]) == plant:
-                   # print(plant)
-                    plant1 = self.map.map[self.location[0]-1][self.location[1]-1]
-                    if plant1.alive == True:
+        for amount in self.food_history:  # amount is the amount of food eaten at each step where food was consumed
+            weekly_food_counter = weekly_food_counter + amount
 
+        # this block controls whether or not a creature eats, and how much it eats
+        if weekly_food_counter < self.food_needs:
+            # for all creatures that eat plant material of any kind
+            if self.herbivore == True:
+                # if the creature's location on the map is occupied by a plant:
+                if type(self.map.map[self.location[0]-1][self.location[1]-1]) == plant:
+                    # naming this plant plant1 to reference with ease
+                    plant1 = self.map.map[self.location[0]-1][self.location[1]-1]
+                    if plant1.alive == True:  # only living plants may be eaten!
+                        # eating a random amount of the plant, based off of the plant's height
                         height_eaten = random.randint(int(plant1.height/5), int(plant1.height))/plant1.height
+                        # avoiding eating nothing as this is unlikely! can be customized
                         if height_eaten == 0:
                             height_eaten = 1
-                        amount_eaten = height_eaten * plant1.width
-                        #print("i ate", self, self.age_days, amount_eaten, self.food_needs, self.location, plant1.height, plant1.minimum_height)
-                    #print("amount eaten", amount_eaten)
-                        self.food_history.append(amount_eaten)
-                        plant1.be_eaten(height_eaten)
-            else:
-                #print("here!!!!!!!!!!")
+                        amount_eaten = height_eaten * plant1.width  # this is the square amount of plant eaten!
+                        self.food_history.append(amount_eaten)  # tracking the amount of plant eaten
+                        plant1.be_eaten(height_eaten)  # calling a method to update the plant with the amount that was eaten
+
+            # for all creatures that eat meat
+            elif self.carnivore == True:
                 for species1, location in map.species_placement.items():
                     #print("here", species1.name)
                     if self.location == location and self != species1 and species1.alive == True:
                         for i in self.prey:  # self is predatory i is species that is the prey
                             if i[0] == species1.name:
                                 species1.distance_to_shelter(map)  # how close is the prey to shelter?
-                                prey_survival_odds = random.randint(0,100) +((self.coefficient - species1.coefficient) * 1/(species1.closest_distance+1))
+                                prey_survival_odds = random.randint(0,100) +((self.coefficient - species1.coefficient) /(species1.closest_distance+1))
                                 if prey_survival_odds > i[1]:
                                     species1.alive = False
+                                    print(species1.name, "eaten")
                                     self.food_history.append(species1.weight)
 
         if self.map.map[self.location[0] - 1][self.location[1] - 1] == "R":
@@ -247,7 +288,7 @@ class species:
         else:
             #self.weight = self.weight - (self.weight_difference / 2)
             self.alive = False
-            print(self, "lost too much")
+            print(self.name, "lost too much")
             self.death_cause = "lost too much weight"
 
     def update_status(self, weekly_food_counter, weekly_water_counter):
@@ -275,7 +316,7 @@ class species:
 
     def distance_to_shelter(self, map):
         self.distances_list = []
-        
+
         first = random.randint(0, len(map.shelter_placement))
         second = random.randint(0, len(map.shelter_placement))
         third = random.randint(0, len(map.shelter_placement))

@@ -185,13 +185,13 @@ def plant_week(plants, map, weather): #FIXME add sunlight needs
 
 
 def main():
-    plants = make_plants(600)  # making plants
+    plants = make_plants(800)  # making plants
    # for i in plants:
    #     print(i.alive)
     map = (create_habitat(plants))  # making the habitat using the plants
     all_creatures = []
-    rabbits = create_creatures(20, map,100,0.5,5,2,2,15,3,[], [["P",0]],37,100,100,100,100,100,100,100,5, True, False, "rabbit", 8, False)  # making 20 creatures using the map #FIXME make this easier to set up different creatures
-    wolves = create_creatures(10, map, 100, 2, 100, 8, 2, 90,90,[], [["rabbit", 30]], 34,1000,100,100,100,0,90,10,5,False, True, "wolf", 5, False)
+    rabbits = create_creatures(100, map,90,1,5,2,2,15,3,[], [["P",0]],37,350,100,100,100,100,100,100,3, True, False, "rabbit", 8, False)  # making 20 creatures using the map #FIXME make this easier to set up different creatures
+    wolves = create_creatures(6, map, 70, 2, 100, 8, 2, 90,90,[], [["rabbit", 60]], 34,100,100,100,100,0,90,10,4,False, True, "wolf", 5, False)
     for i in rabbits:
         all_creatures.append(i)
     for i in wolves:
@@ -203,7 +203,7 @@ def main():
     wolf_history = [len(wolves)]
     rabbit_history = [len(rabbits)]
     plant_history = [len(plants)]
-    for week in range(20):
+    for week in range(40):
         print(week, "week")
         for day in range(7):  # a week
             for animal in all_creatures:
