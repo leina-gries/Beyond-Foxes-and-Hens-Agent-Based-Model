@@ -9,29 +9,36 @@ import random
 import math
 "**********************************************************************************************************************"
 class species:
-        # map: map on which the creatures are living, habitat object.
-        # odds_maturing_to_adult: number between 0 and 100 reprensenting the percent of creatures that survive to the age of maturity
-        # adult_age: age of maturation, age at which reproduction is possible
-        # av_adult_weight: average weight for an adult of this species
-        # av_max_age: average maximum age (age of natural death) for a creature in this species
-        # annual_growth_rate: factor of increase of weight per year
-        # gestation_period: time between conception and birth, pregnancy duration
-        # predators: species which can eat this creature object
-        # prey: species / plant types which can be eaten
-        # av_speed: average maximum speed
-        # av_range: daily range, number of "steps" taken, more theoretical than directly related to a distance
-        # vision: average eyesight of this species, written as an integer out of 100
-        # sound: average hearing ability of this species, written as an integer out of 100
-        # smell: average sense of smell of this species, written as an integer out of 100
-        # temp_min: minimum survivable temperature for this species
-        # temp_max: maximum surivable temperature for this species
-        # water_needs: quantity of water needed per week
-        # food needs: amount of food needed per week, in square inchess of plant or pound of meat. Meaning customizable
-        # herbivore: True or False, whether this species eats plants or not
-        # carnivore: True or False, whether or not this species hunts any other creatures. Species can be both (onmivores)
-        # name: species name! used for interactions with others and for data collection
-        # number_of_offspring: average number of offspring per pregnancy
-        # new generation: True or False, False when first creating creatures. For any creatures created by in-model replication, True.
+    """
+    This class defines the creatures which will be the main agents in this model. This class is used for all animal
+    species- predators and prey, omnivores, carnivores and herbivores alike. Through the initial instance variables,
+    the differences between species can be defined. This means that all species have the same methods, and can interact
+    with one another in a variety of ways. This class is also used to create more creatures of the same species, so
+    after initiating the program with a set number of creatures of each species, the creatures replicate independently.
+    """
+    # map: map on which the creatures are living, habitat object.
+    # odds_maturing_to_adult: number between 0 and 100 reprensenting the percent of creatures that survive to the age of maturity
+    # adult_age: age of maturation, age at which reproduction is possible
+    # av_adult_weight: average weight for an adult of this species
+    # av_max_age: average maximum age (age of natural death) for a creature in this species
+    # annual_growth_rate: factor of increase of weight per year
+    # gestation_period: time between conception and birth, pregnancy duration
+    # predators: species which can eat this creature object
+    # prey: species / plant types which can be eaten
+    # av_speed: average maximum speed
+    # av_range: daily range, number of "steps" taken, more theoretical than directly related to a distance
+    # vision: average eyesight of this species, written as an integer out of 100
+    # sound: average hearing ability of this species, written as an integer out of 100
+    # smell: average sense of smell of this species, written as an integer out of 100
+    # temp_min: minimum survivable temperature for this species
+    # temp_max: maximum surivable temperature for this species
+    # water_needs: quantity of water needed per week
+    # food needs: amount of food needed per week, in square inchess of plant or pound of meat. Meaning customizable
+    # herbivore: True or False, whether this species eats plants or not
+    # carnivore: True or False, whether or not this species hunts any other creatures. Species can be both (onmivores)
+    # name: species name! used for interactions with others and for data collection
+    # number_of_offspring: average number of offspring per pregnancy
+    # new generation: True or False, False when first creating creatures. For any creatures created by in-model replication, True.
 
     def __init__(self, map, odds_maturing_to_adult, adult_age, av_adult_weight, av_max_age, annual_growth_rate,
                  gestation_period, dependency_time,
@@ -172,8 +179,8 @@ class species:
 
     def print(self):
         """
-        Just a simple little method to print useful information about the object.
-        :return:
+        Just a simple little method to print useful information about the object. Amend as you like.
+        :return: print statements
         """
         print("age is ", self.age_days)
         print("age in days is", self.age_days)
@@ -198,10 +205,10 @@ class species:
         """
         self.location[0] = self.location[0]+ height_change  # changing the height (interior list number)
         self.location[1] = self.location[1]+ width_change  # changing the width (position in interior list)
-        return self.location
+        return self.location  # where the object is in relation to the habitat map
 
 
-    def eat(self, map):  #FIXME don't let animals go into the river, or make this an option.
+    def eat(self, map):
         """
         eat is the method through which all creatures eat. It uses the map to cross reference the creature's position
         with the position of other creatures and plant objects on the map to determine if the creature can eat anything
@@ -236,93 +243,138 @@ class species:
 
             # for all creatures that eat meat
             elif self.carnivore == True:
-                for species1, location in map.species_placement.items():
+                for species1, location in map.species_placement.items():  # for each other species and their location
                     #print("here", species1.name)
                     if self.location == location and self != species1 and species1.alive == True:
-                        for i in self.prey:  # self is predatory i is species that is the prey
+                        for i in self.prey:  # self is predatory i is species that is the prey types in their list
                             if i[0] == species1.name:
                                 species1.distance_to_shelter(map)  # how close is the prey to shelter?
+                                # testing the prey's survival. The specifics of this equation can be modified to your liking
+                                # they currently take into account the relative abilities of each species in question, and
+                                # their distance to shelter, so the prey object can make an escape. There is also a random
+                                # element to this
                                 prey_survival_odds = random.randint(0,100) +((self.coefficient - species1.coefficient) /(species1.closest_distance+1))
-                                if prey_survival_odds > i[1]:
-                                    species1.alive = False
-                                    print(species1.name, "eaten")
-                                    self.food_history.append(species1.weight)
+                                if prey_survival_odds > i[1]:  # must be smaller than their odds of survival to survive
+                                    # example: a species survives 30% of attacks from another set species. If their survival odds are
+                                    # anything over 30, they will not survive, but 30 and under, they will.
+                                    species1.alive = False  # the prey creature is no longer alive
+                                    print(species1.name, "eaten")  # useful data for fine tuning variables
+                                    self.food_history.append(species1.weight)  # add the weight of the prey to the predator's food history
 
-        if self.map.map[self.location[0] - 1][self.location[1] - 1] == "R":
+        if self.map.map[self.location[0] - 1][self.location[1] - 1] == "R":  # if they are "in" a river
             #print("water", self.map.map[self.location[0]-1][self.location[1]-1])
             self.water_history.append(self.water_needs/ (7/3))  # each time they find water, they drink a day's worth
-        if self.map.map[self.location[0] - 1][self.location[1] - 1] == "W":
+        if self.map.map[self.location[0] - 1][self.location[1] - 1] == "W":  # if they are "in" a different water source
             #print("water1", self.map.map[self.location[0] - 1][self.location[1] - 1])
             self.water_history.append(self.water_needs / (7/3))  # each time they find water, they drink a day's worth
 
-                #self.food_history.append("no plant here.")
 
-        ###print(self.map.map[self.location[0][self.location[1]]])
-        #print(self.map_for_animals)
-       # print(self.map_for_animals[self.location[0]][self.location[1]])
+
     def birth(self, number_of_offspring):
-        baby_list = []
-        for i in range(number_of_offspring):
+        """
+        This method controls the creation of new creatures! So, after a pregnancy and the appropriate gestation period,
+        this method takes the appropriate number of offspring for this creature at this time, and creates this many
+        new objects of the same type, based off of the instance variables used to create new creature objects of the same
+        species.
+        Note! Here, you can create evolution! You can set the instance variables used to create the new creatures to be
+        the specifics of the parents (which are based off of the initial user- input variables but slightly
+        randomized to give the species a range of unique individuals) instead of the original instance variables.
+        The most fit will survive to pass on their variables!
+        :param number_of_offspring: the number of offspring to be born, the number of objects to be created
+        :return: a list containing all of the new creature objects created
+        """
+        baby_list = []  # an empty list to later hold all the newly created creatures
+        for i in range(number_of_offspring):  # create "number_of_offspring" creatures
+            # using the instance variables from the parent creature (self) to initiate new creatures
+            # add the new creatures to the list of new creatures
             baby_list.append(species(self.map, self.odds_maturing_to_adult, self.adult_age, self.adult_weight, self.max_age, self.annual_growth_rate,
                      self.gestation_period, self.dependency_time,
                      self.predators, self.prey, self.av_speed, self.av_range, self.vision, self.sound, self.smell, self.temp_min, self.temp_max, self.water_needs,
-                        self.food_needs, self.herbivore, self.carnivore, self.name, self.number_of_offspring, False))
-            #print("new baby animal here !!!!!!!!!!")
-        #print("list from main", baby_list)
+                        self.food_needs, self.herbivore, self.carnivore, self.name, self.number_of_offspring, True))
+                        # the final variable, "New Generation", is set to True, to control age and size of the new creatures
+                        # this is the only way the initiation of the new creatures differ from the original generation of
+                        # creatures.
 
         return baby_list
 
 
     def growth_weekly(self):
-        if self.weight > self.adult_weight:
-            self.weight = self.weight * (1/52)*self.annual_growth_rate #FIXME make food required relative to weight
-        else:
+        """
+        This controls the weekly growth of a creature. It is only called if they have consumed enough food that week.
+        :return: updates the instance variable
+
+        """
+        if self.weight > self.adult_weight:  # if they are at their mature weight, growth slows to the normal amount
+            self.weight = self.weight * (1/52)*self.annual_growth_rate
+        else:  # when they are below their mature weight, (either because they are juvenilles or because they are underfed,
+            # their weight increases at twice the normal weight
             self.weight = self.weight * (1/26)*self.annual_growth_rate
+
+
 
     def lose_weight(self):
         if self.losing_weight == False: #FIXME MAKE MARGINS MORE REALISTIC can be losing weight for a while but die with no food
             #self.weight_difference = self.weight - self.minimum_weight
             #self.weight = self.weight - (self.weight_difference/2)
-            self.losing_weight = True
-            print(self.name, "loosing weight")
+            self.losing_weight = True  # informs the way weight loss is processed next time.
+            print(self.name, "loosing weight")  # useful when trying to balance a system
         else:
-            #self.weight = self.weight - (self.weight_difference / 2)
-            self.alive = False
-            print(self.name, "lost too much")
+            #self.weight = self.weight - (self.weight_difference / 2)  # can be added to manipulate weight loss
+            self.alive = False  # dies of stavation with too little food two weeks in a row
+            print(self.name, "lost too much weight ")  # useful for balancing systems
             self.death_cause = "lost too much weight"
 
     def update_status(self, weekly_food_counter, weekly_water_counter):
-        if weekly_food_counter < self.food_needs:
-            self.lose_weight()
+        """
+        This is called weekly to determine and update the status of the creature after each week's events. This means
+        alive versus dead, drought and weight loss status, and weight.
+        :param weekly_food_counter: a list containing the creature's food intake in the previous 7 days
+        :param weekly_water_counter:  a list containing the creature's water intake in the previous 7 days
+        :return: None, updates instance variables
+        """
+        if weekly_food_counter < self.food_needs:  # if the amount of food eaten total that week is lower than needed
+            self.lose_weight()  # lose weight
         else:
             self.losing_weight = False
-            if weekly_water_counter > self.water_needs:
-                self.growth_weekly()
-        #if self.weight < self.minimum_weight and self.age:
-        #    self.alive = False
-        #    self.death_cause = "starvation"
-        if self.age_days >= self.personal_maximum_age_days:
-            self.alive = False
+            if weekly_water_counter > self.water_needs:  # if both food and water intake is sufficient
+                self.growth_weekly()  # grow!
+        if self.age_days >= self.personal_maximum_age_days:  # if its age is above its maximum age in days
+            self.alive = False  # death of old age
             self.death_cause = "age"
-        if weekly_water_counter < self.water_needs *0.25:  # CHANGE THIS TO IMPACT DROUGHT TOLERANCE
-            self.alive = False
+        if weekly_water_counter < self.water_needs *0.25:  # USER: CHANGE THIS TO IMPACT DROUGHT TOLERANCE
+            self.alive = False  # death of dehydration if less than 1/4 of weekly water needs are consumed
             self.death_cause = "dehydration"
         if weekly_water_counter < self.water_needs and self.drought_status == True:
-            self.alive = False
-            self.death_cause = "dehydration"
+            self.alive = False  # if already in a drought and not consuming enough water a second week in a row
+            self.death_cause = "dehydration"  # death by dehydration
         if weekly_water_counter > self.water_needs*0.25 and weekly_water_counter < self.water_needs:
+            # if water intake is between a quarter and the proper amount of water, enters a drought status
             self.drought_status = True
 
 
     def distance_to_shelter(self, map):
+        """
+        Calculates the creature's distance to shelter items. This is used when escaping predators. There are two options-
+        one to calculate the creature's distance to every single shelter object, which is more accurate in returning the
+        closest distance to shelter, but is computationally complex. The second and more efficient object, on the other
+        hand, finds the distance between the creature and each of 5 random shelter objects. It the organizes these and
+        finds the shortest distance.
+        :param map: the map on which the creature is located, which contains a map of all shelter objects on the map
+        :return: updates instance variables
+        """
         self.distances_list = []
 
+        # finding 5 random shelter pieces on the map, shown as the number representing their place on the list
         first = random.randint(0, len(map.shelter_placement))
         second = random.randint(0, len(map.shelter_placement))
         third = random.randint(0, len(map.shelter_placement))
         fourth = random.randint(0, len(map.shelter_placement))
         fifth = random.randint(0, len(map.shelter_placement))
+
+        # a list of the actual locations of each of the chosen shelter pieces
         points_list = [map.shelter_placement[first-1], map.shelter_placement[second-1], map.shelter_placement[third-1], map.shelter_placement[fourth-1], map.shelter_placement[fifth-1]]
+
+        # this for loop finds the distance between the creature and the shelter unit in question
         for i in points_list:
             length_distance = self.location[0] - i[0]
             width_distance = self.location[1] - i[1]
@@ -330,10 +382,13 @@ class species:
             width_squared = width_distance ** 2
             sum = length_squared + width_squared
             distance = math.sqrt(sum)
+            # adding the distance to the list
             self.distances_list.append(distance)
+        # find the smallest distance
         self.distances_list.sort()
-        self.closest_distance = self.distances_list[0]
+        self.closest_distance = self.distances_list[0]  # use the smallest
         """
+        ## This code is less efficient but uses all of the points in the shelter placement list. 
         for i in map.shelter_placement:
             length_distance = self.location[0] - i[0]
             width_distance = self.location[1] - i[1]
@@ -349,29 +404,49 @@ class species:
         third = random.randint(0,len(self.distances_list))
         third_point = self.distances_list[third]
         points_options = [first_point, second_point, third_point]
-        points_options.sort()
+        points_options.sort()  # this adds a lot of complexity 
         self.closest_distance = points_options[0]
         """
 
 
 
-
-"""
-    def time_basics(self, duration):  # duration is in years
-        for i in range(0, duration + 1):
-            self.age = self.age + 1
-            if self.age >= self.adult_age:
-                self.weight = self.weight * self.annual_growth_rate
-        if self.age == self.personal_maximum_age:
-            self.alive = False
-            # otherwise, weight is going to depend on amount eaten... deal with this later
-            # deal with whether or not they get eaten.... or starve
-"""
 "**********************************************************************************************************************"
 class habitat:
+    """
+    This class is used to create the habitat in which the creatures will live in this model. The most commonly used
+    part of a habitat object is the map, which encodes all the information in the habitat in a spatial representation.
+    The habitat map, as it is often referred to in future methods and procedures, is a nested list. The length of the
+    outer list represents the length of the habitat map, and the length of the interior list represents the width of the
+    map. The interior lists contain information about what is at that particular place in the shelter, whether it be
+    plant, shelter, or water.
+
+    This is an example map. We will call it map.
+
+    This is the width. It is 7 units wide.
+    ________________
+    [[0][0][0][0][0][0][0]]      |
+    [[0][0][0][0][0][0][0]]      |
+    [[0][0][0][0][0][0][0]]      |
+    [[0][0][0][0][0][0][0]]    This is the length. It is 8 units wide.
+    [[0][0][0][0][0][0][0]]      |
+    [[0][0][0][0][0][0][0]]      |
+    [[0][0][0][0][0][0][0]]      |
+    [[0][0][0][0][0]["R"][0]]
+
+                ^
+    This unit has a river on it. The location of the river is map[8][6]. This is backwards from standard coordinates!
+    Here, length ( the "y" coordinate) comes before width (the "x" coordinate).
+
+    """
     # river: array, present or not, length, width, works for rivers and lengths
-    def __init__(self, area, percent_shelter, average_size_shelter, river_presence, nutrient_availability, sun_availabiility, max_temp,
-                 min_temp, precipitation_frequency, precipitation_amount):
+    # area: the area in square units of this habitat.
+    # percent_shelter: the percent of the area of the habitat that is covered in shelter.
+    # average_size_shelter: the average size, in square units, of the shelter clumps, ie how many shelter units tend to be
+        # in the same area as a group
+    # river_presence: a list containing three elements. The first, True or False, whether or not there is a river. The
+        # second, the length of the river in units. The third, the width of the river, in units.
+
+    def __init__(self, area, percent_shelter, average_size_shelter, river_presence):
 
         self.area = area
         self.percent_shelter = percent_shelter
@@ -383,8 +458,8 @@ class habitat:
         self.river_width = river_presence[2]
         self.units_of_shelter = 0
 
-        self.available_list = []
-        self.animal_available_list = []
+        self.available_list = []  # available shelter units
+        self.animal_available_list = []  # places where animals can be (places on the map)
         self.plants = []
 
         self.species_placement = {}
@@ -392,192 +467,239 @@ class habitat:
 
 
     def create_map(self):
-
+        """
+        Creates the map (nested list) of the proper area, using random length, and the corresponding width. The width is
+        the nested interior list, and the length is the exterior list.
+        :return: self.map - the completed map
+        """
         # creating the map randomly
-        holder = int(math.sqrt(self.area))
-        self.length = random.randint(int(holder*0.5), int(holder*1.5))
-       # print(self.length, "length")
-        self.width = int(self.area/self.length)
+        holder = int(math.sqrt(self.area))  # this is to prevent the creation of an extrordinarily long and skinny map
+        self.length = random.randint(int(holder*0.5), int(holder*1.5))  # ensures each side is of at least moderate length
+       # print(self.length, "length")  # can be used to show map dimensions
+        self.width = int(self.area/self.length)  # finding the corresponding width
        # print(self.width, "width")
         self.map = []
         mini_map = []
-        for i in range(0, self.length):
-            for j in range(0, self.width):
-                mini_map.append(0)
+
+        # this for loop creates the map through the use of a mini map to be a placeholder.
+        for i in range(0, self.length):  # creating the exterior list
+            for j in range(0, self.width):  # creating the interior list
+                mini_map.append(0)  # filling each map space with a 0
             self.map.append(mini_map)
             mini_map = []
         return self.map
 
+
     def create_random_shelter_units(self):
+        """
+        This makes the shelter units randomly sized based off of the average size defined in the instance variables. It
+        does not go above the number of shelter units given in the instance variables.
+        :return: the sizes of the shelter clumps
+        """
         # setting randomly sized units of shelter
-        self.units_of_shelter = int(self.percent_shelter/100 * self.area)  # square feet
-        #print("units total shelter", units_of_shelter)
+        self.units_of_shelter = int(self.percent_shelter/100 * self.area)  # square feet or units
+        #print("units total shelter", units_of_shelter) # helpful at the start
         counter = 0
-        while self.units_of_shelter > 0:
+        while self.units_of_shelter > 0:  # while there are still remaining units of shelter
+            # a clump is between half and twice the average shelter size, normally
             clump_size = random.randint(int(self.average_size_shelter/2), int(2*self.average_size_shelter))
+            # if the clump is larger than the remaining units of shelter, the clump is the remaining units of shelter
             if self.units_of_shelter < clump_size:
                 clump_size = self.units_of_shelter
+            # adding the clump size to the list
             self.shelter_clump_sizes.append(clump_size)
+            # keeping a counter of total units used
             counter = counter + clump_size
+            # tracking the units of shelter used so as not to go over
             self.units_of_shelter = self.units_of_shelter - clump_size
             #print(units_of_shelter, "units left")
-     #   print("sizes", self.shelter_clump_sizes, "counter", counter)
+     #   print("sizes", self.shelter_clump_sizes, "counter", counter)  # useful
         return self.shelter_clump_sizes
 
-        # randomly spacing the units of shelter in their size clumps out
+
     def space_clump_sizes(self):
+        """
+        Randomly spacing out the clumps. This randomly breaks the shelter clump into lines of different lengths, to be
+        stacked vertically. This will give varied shapes of shelter, so they are not uniform, and not a single line.
+        :return: updates the self.lines_per_clump instance variable
+        """
         clump_list = []
         lines_per_clump = []
       #  print(self.shelter_clump_sizes)
-        for i in self.shelter_clump_sizes:
-            while i > 0:
-                line_size = random.randint(1, i)
-                clump_list.append(line_size)
-                i  = i - line_size
-            lines_per_clump.append(clump_list)
+        for i in self.shelter_clump_sizes:  # for each shelter clump
+            while i > 0:  # while there are units of shelter remaining
+                line_size = random.randint(1, i)  # a randomly sized line at most the remaining number of units left
+                clump_list.append(line_size)  # add this to the list
+                i  = i - line_size  # remove these from the remaining units
+            lines_per_clump.append(clump_list)  #add the list of lines per that clump to the overlal list
             clump_list = []
-        self.lines_per_clump = lines_per_clump
+        self.lines_per_clump = lines_per_clump  # update the instance variable
      #   print(self.lines_per_clump)
         return self.lines_per_clump
 
-        # checking if a space is available
+
+
     def place_shelter(self):
-        #print("here!!!!!!", self.width, self.length)
+        """
+        This method places the shelter units in their respective clumps on the map. If only one shelter unit is in a place,
+        the space is mapped with a "S", and if there are two, then it is a "DS", for "dense shelter". There may not be
+        three shelter units overlapping; if a shelter unit is placed on "DS", this method returns False and so it starts
+        over finding a place for this shelter clump.
+        :return: True - indicating all units were placed successfully
+        """
         mini_map = []
         map_holder = []
+
+        # this for loop creates a replica of the main map object. This is so this method can try out multiple placements
+        # of shelter clumps before finding the one that works for all shelter units.
         for i in self.map:
             for j in i:
                 mini_map.append(j)
             map_holder.append(mini_map)
             mini_map = []
 
-        #FIXME MAKE IT SO THE SHELTER CANNOT BE PLACED ON A RIVER EITHER
-        #FIXME add in the test is availble
-        for i in self.lines_per_clump:
-            width_coordinate = random.randint(1, self.width)
-            length_coordinate = random.randint(1, self.length)
-            for j in i:
-                for k in range(j):
-                    if width_coordinate < (self.width) and length_coordinate < (self.length):
-                        if map_holder[length_coordinate-1][width_coordinate-1] == 0:
+        for i in self.lines_per_clump:  # for each shelter clump
+            width_coordinate = random.randint(1, self.width)  # cho0se a random coordinate within the width
+            length_coordinate = random.randint(1, self.length)   # choose a random coordinate within the length
+            for j in i: # for each line in each shelter clump
+                for k in range(j):  # in the range of the length of this line of the shelter clump
+                    if width_coordinate < (self.width) and length_coordinate < (self.length):  # checking it fits the map
+                        if map_holder[length_coordinate-1][width_coordinate-1] == 0:  # if blank, place shelter
                             map_holder[length_coordinate-1][width_coordinate-1] = "S"
+                            # adding this to the list of locations with shelter
                             self.shelter_placement.append([length_coordinate, width_coordinate, "S"])
-                        elif map_holder[length_coordinate-1][width_coordinate-1] == "S":
+                        elif map_holder[length_coordinate-1][width_coordinate-1] == "S":  # if sheltered, add dense shelter
                             map_holder[length_coordinate-1][width_coordinate-1] = "DS"
+                            # adding this to the list of locations with shelter
                             self.shelter_placement.append([length_coordinate, width_coordinate, "DS"])
                         while map_holder[length_coordinate-1][width_coordinate-1] == "R" or map_holder[length_coordinate-1][width_coordinate-1] == "W":
-                            #print("beeo", map_holder[length_coordinate-1][width_coordinate-1])
+                            # if there is water or a river here, select a different coordinate and start over
                             width_coordinate = random.randint(1, self.width)
                             length_coordinate = random.randint(1, self.length)
-                    else:
-                       # print("hete")
-                        return False
-                    width_coordinate = width_coordinate + 1
+                    else:  # if this goes off the edge of the map
+                        self.shelter_placement = []  # clear this instance variable
+                        return False  # start the placement over. This means a line went over the edge
+                    width_coordinate = width_coordinate + 1  # move over one for the length of the line
 
-                length_coordinate = length_coordinate + 1
-            width_coordinate = width_coordinate - j
-            #print(x_coordinate, y_coordinate)
-        self.map = map_holder
-        #print(self.shelter_placement)
+                length_coordinate = length_coordinate + 1  # move down one for a new line in the shelter clump
+            width_coordinate = width_coordinate - j  # reset location
+
+        self.map = map_holder # if all works, set the main map equal to the placeholder
+        #print(self.shelter_placement) # can be useful
         return True
 
 
     def check_if_available(self):
+        """
+        This is used to make placing the next environmental factors (plants) more efficient. It is a list of spaces with
+        no other information or objects, spaces that only contain "0". The locations of these spaces are added to a list
+        as a list coordinate (ie [2][1]).
+        :return: updates the available list instance variable
+        """
         self.available_list = []
         first_counter = 0
         second_counter = 0
-        for i in self.map:
-            first_counter = first_counter + 1
-            for n in i:
-                second_counter = second_counter + 1
-                if n == 0:
-                    self.available_list.append([first_counter-1, second_counter-1])
+
+        # this for loop finds the available spaces, spaces which only contain "0"
+        for i in self.map: # for each exterior list (aka length)
+            first_counter = first_counter + 1  # counting the current location
+            for n in i:  # for the interior lists in this exterior list
+                second_counter = second_counter + 1  # tracking this location as well
+                if n == 0:  # if this space is empty
+                    self.available_list.append([first_counter-1, second_counter-1])  # adding the location to the list
                 else:
-                    pass
-                  #  print("no", n)
-            second_counter = 0
-       # print(self.available_list)
+                    pass  # can be used to create a list of filled spaces
+            second_counter = 0  # resetting the counter each time.
+
 
 
     def check_if_available_for_animal(self):
+        """
+        Ensures that creatures are not placed in the water. This is used to make creature placement more efficient.
+        :return: updates and returns the animal_available list instance variable
+        """
         self.animal_available_list = []
         first_counter = 0
         second_counter = 0
+
         for i in self.map:
-            first_counter = first_counter + 1
+            first_counter = first_counter + 1  # tracking current location in exterior list
             for n in i:
-                second_counter = second_counter + 1
-                if n != "R" and n != "W":
+                second_counter = second_counter + 1  # tracking location in interior list
+                if n != "R" and n != "W":  # if it is not water, add to list of available locations
                     self.animal_available_list.append([first_counter-1, second_counter-1])
                 else:
-                    pass
+                    pass  # this can be added if you want to note spaces with water
                   #  print("no", n)
             second_counter = 0
         return self.animal_available_list
 
 
 
-
     def place_rivers(self):
-
+        """
+        This code places the rivers on the map using the self.river_presence instance variable for the data. This is done
+        before shelter objects are creates, so river spaces do not need to be placed in a manner that avoids shelter clumps.
+        :return: updates the map
+        """
         mini_map_river = []
         map_holder_river = []
-        for i in self.map:
-            for j in i:
+
+        # this makes a mini map to hold the river data placement attepts before pushing these through to the main map
+        for i in self.map:  # each outer list
+            for j in i:  # each inner list
                 mini_map_river.append(j)
             map_holder_river.append(mini_map_river)
             mini_map_river = []
 
-
-       # print(self.river_presence)
-        if self.river_presence == True:
-            # first, a flat accross river. no slope, just going across until
-           # print(self.river_length, self.river_width)
+        if self.river_presence == True:  # only make a river if there is a river on the map!
             length_coordinate = 0
             width_coordinate = 0
-            for i in range(self.river_width):
-                for i in range(self.river_length):
+            for i in range(self.river_width):  # this will move left to right adding river units depending on width
+                for i in range(self.river_length):  # this will go downwards as long as necessary until length is met
+                    # checking that we have not moved off of the map
                     if length_coordinate < self.length and width_coordinate < self.width:
+                        # adding a river marker
                         map_holder_river[length_coordinate-1][width_coordinate] = "R"
+                        # moving diagonally down the map
                         length_coordinate = length_coordinate + 1
                         width_coordinate = width_coordinate + 1
                     else:
+                        # if placing this river unit would take us off the map, place the unit of water randomly
                         random_length = random.randint(1, self.length)
                         random_width = random.randint(1, self.width)
                         while map_holder_river[random_length-1][random_width-1] != 0:
+                            # keep trying random coordinated until one is an empty space
                             random_length = random.randint(1, self.length)
                             random_width = random.randint(1, self.width)
+                        # place this unit as "W" for water instead of river.
                         map_holder_river[random_length-1][random_width-1] = "W"
-                length_coordinate = 1
-                width_coordinate = 0
+                length_coordinate = 1  # move the length over by one to go through the next diagonal line
+                width_coordinate = 0  # start the width over
+
+            # when complete, use the map_river_holder to replace the map object.
+            # the map object now has river markers
             self.map = map_holder_river
 
     def place_plant_objects(self, plant_objects):
-
+        """
+        This method places the plant objets created elsewhere on the map. It places the entire object here, which enables
+        them to be manipulated simply and efficiently. It uses the available_list to find empty (non water) spots to
+        place plants.
+        :param plant_objects: A list of plant objects
+        :return: modifies the map to include the plant objects on the map.
+        """
+        # for each plant object in the list
         for i in plant_objects:
+            # add this object to the list of plants known by the map
             self.plants.append(i)
+            # select a random point within the map- this is a point from the list of available points
+            # this point represents a location on the available_list, which is a coordinate that is available on the map
             point = random.randint(0, len(self.available_list)-1)
-            #print(self.available_list[point][0], self.available_list[point][1])
+            #print(self.available_list[point][0], self.available_list[point][1])  # useful
+            # sets the location on the map (selected by the random point referenced with the available list) to the plant object
             (self.map[self.available_list[point][0]][self.available_list[point][1]]) = i
-        #print(self.map)
 
-
-
-
-
-
-
-
-        """
-            random_length = random.randint(1, self.length)
-            random_width = random.randint(1, self.width)
-            if self.map[random_length-1][random_width-1] == "0":
-                print("wooot")
-            else:
-               while self.map[random_length - 1][random_width - 1] != "0":
-                    random_length = random.randint(1, self.length)
-                    random_width = random.randint(1, self.width)
-        """
 
 "**********************************************************************************************************************"
 class plant:  #FIXME starting with just one species and assuming that all animals can eat it, add impact of temperature, seasons, etc

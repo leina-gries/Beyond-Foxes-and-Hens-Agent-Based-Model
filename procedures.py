@@ -1,4 +1,5 @@
 from main import *
+import matplotlib.pyplot as plt
 
 
 "**********************************************************************************************************************"
@@ -25,7 +26,7 @@ def create_creatures(number, map, odds_maturing_to_adult, adult_age, av_adult_we
 
 "**********************************************************************************************************************"
 def create_habitat(plants):
-    yes = habitat(1000,10,20, [True,80,4], 100,100,80,40,20,10)
+    yes = habitat(2000,10,20, [True,80,4])
     yes.create_map()
     yes.place_rivers()
 
@@ -185,25 +186,34 @@ def plant_week(plants, map, weather): #FIXME add sunlight needs
 
 
 def main():
-    plants = make_plants(800)  # making plants
+    plants = make_plants(1500)  # making plants
    # for i in plants:
    #     print(i.alive)
     map = (create_habitat(plants))  # making the habitat using the plants
     all_creatures = []
-    rabbits = create_creatures(100, map,90,1,5,2,2,15,3,[], [["P",0]],37,350,100,100,100,100,100,100,3, True, False, "rabbit", 8, False)  # making 20 creatures using the map #FIXME make this easier to set up different creatures
-    wolves = create_creatures(6, map, 70, 2, 100, 8, 2, 90,90,[], [["rabbit", 60]], 34,100,100,100,100,0,90,10,4,False, True, "wolf", 5, False)
+    deer = create_creatures(50,map, 80, 3,100,18,2,60,100,["wolf"], [["P", 100]], 40,500,90,100,80,0,100,30,15,True, False, "deer", 3, False)
+    mice = create_creatures(150,map,90,1,1,2,2,15,0,["wolf"],[["P",0]],20,100,90,90,90,30,90,5,0.5,True, False, "mouse", 15,False)
+    rabbits = create_creatures(190, map,90,1,5,2,2,15,3,["wolf"], [["P",0]],37,350,125,100,100,100,100,10,3, True, False, "rabbit", 8, False)  # making 20 creatures using the map #FIXME make this easier to set up different creatures
+    wolves = create_creatures(8, map, 70, 2, 100, 8, 2, 90,90,[], [["rabbit", 45], ["mouse", 40], ["deer", 90]], 34,250,100,100,100,0,90,10,4,False, True, "wolf", 5, False)
     for i in rabbits:
         all_creatures.append(i)
     for i in wolves:
+        all_creatures.append(i)
+    for i in mice:
+        all_creatures.append(i)
+    for i in deer:
         all_creatures.append(i)
 
     for i in all_creatures:
         map.species_placement[i] = i.location
     print(len(all_creatures))
+    mouse_history = [len(mice)]
     wolf_history = [len(wolves)]
     rabbit_history = [len(rabbits)]
+    deer_history = [len(deer)]
+
     plant_history = [len(plants)]
-    for week in range(40):
+    for week in range(20):
         print(week, "week")
         for day in range(7):  # a week
             for animal in all_creatures:
@@ -216,11 +226,17 @@ def main():
                     animal.age_days = animal.age_days + 1
         rabbit_counter = 0
         wolf_counter = 0
+        mouse_counter = 0
+        deer_counter = 0
         for i in all_creatures:
             if i.name == "rabbit" and i.alive == True:
                 rabbit_counter = rabbit_counter + 1
             elif i.name == "wolf" and i.alive == True:
                 wolf_counter = wolf_counter + 1
+            elif i.name == "mouse" and i.alive == True:
+                mouse_counter = mouse_counter + 1
+            elif i.name == "deer" and i.alive == True:
+                deer_counter = deer_counter + 1
             if i.alive == True:
                 if i.age_days > 8:
                     weekly_food_counter = 0
@@ -234,11 +250,14 @@ def main():
                         weekly_water_counter = weekly_water_counter + drink
                     i.update_status(weekly_food_counter, weekly_water_counter)
 
-
+        mouse_history.append(mouse_counter)
         rabbit_history.append(rabbit_counter)
         wolf_history.append(wolf_counter)
+        deer_history.append((deer_counter))
+        print("mice", mouse_counter)
         print("rabbits", rabbit_counter)
         print("wolves", wolf_counter)
+        print("deer", deer_counter)
 
         more_plants = plant_week(plants, map, make_weather())  # plant week
         for i in more_plants:
@@ -253,25 +272,21 @@ def main():
         #print("plants", weekly_plant_counter)
         plant_history.append(weekly_plant_counter)
         print("plants", weekly_plant_counter)
+        print("plants overall", plant_history)
 
-            #print(creature)
+        print("rabbits", rabbit_history)
+        print("wolves", wolf_history)
+        print("mouse", mouse_history)
+        print("deer", deer_history)
+
+        #print(creature)
     print("done")
     print("plants overall",plant_history)
 
     print("rabbits", rabbit_history)
     print("wolves", wolf_history)
-
-    #print(hi)
-          #  print("starting new animal")
-   # for animal in rabbits:
-    #    print("this one!!!!", animal.food_history)
-
-   # for i in plants:
-   #     print(i.alive)
-    #make_weather()
-
-    #print("test")
-# fixme make baby creatures dependent on mothers/ make this an option
+    print("mouse", mouse_history)
+    print("deer", deer_history)
 
 
 main()
