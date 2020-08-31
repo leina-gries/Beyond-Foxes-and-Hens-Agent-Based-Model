@@ -1,4 +1,7 @@
 """
+Leina Gries
+Summer 2020
+For Pomona College's RAISE Summer Fellowship Program
 This file defines the classes needed to create objects of a given type. It defines species, habitat, plant, and weather
 objects, and what methods can be performed using them. Several models have commented out sections- these represent choices
 the user can make. For example, it is possible to run a more efficient version of the code, or to chose to run a more
@@ -16,34 +19,36 @@ class species:
     with one another in a variety of ways. This class is also used to create more creatures of the same species, so
     after initiating the program with a set number of creatures of each species, the creatures replicate independently.
     """
-    # map: map on which the creatures are living, habitat object.
-    # odds_maturing_to_adult: number between 0 and 100 reprensenting the percent of creatures that survive to the age of maturity
-    # adult_age: age of maturation, age at which reproduction is possible
-    # av_adult_weight: average weight for an adult of this species
-    # av_max_age: average maximum age (age of natural death) for a creature in this species
-    # annual_growth_rate: factor of increase of weight per year
-    # gestation_period: time between conception and birth, pregnancy duration
-    # predators: species which can eat this creature object
-    # prey: species / plant types which can be eaten
-    # av_speed: average maximum speed
-    # av_range: daily range, number of "steps" taken, more theoretical than directly related to a distance
-    # vision: average eyesight of this species, written as an integer out of 100
-    # sound: average hearing ability of this species, written as an integer out of 100
-    # smell: average sense of smell of this species, written as an integer out of 100
-    # temp_min: minimum survivable temperature for this species
-    # temp_max: maximum surivable temperature for this species
-    # water_needs: quantity of water needed per week
-    # food needs: amount of food needed per week, in square inchess of plant or pound of meat. Meaning customizable
-    # herbivore: True or False, whether this species eats plants or not
-    # carnivore: True or False, whether or not this species hunts any other creatures. Species can be both (onmivores)
-    # name: species name! used for interactions with others and for data collection
-    # number_of_offspring: average number of offspring per pregnancy
-    # new generation: True or False, False when first creating creatures. For any creatures created by in-model replication, True.
 
     def __init__(self, map, odds_maturing_to_adult, adult_age, av_adult_weight, av_max_age, annual_growth_rate,
                  gestation_period, dependency_time,
                  predators, prey, av_speed, av_range, vision, sound, smell, temp_min, temp_max, water_needs,
                  food_needs, herbivore, carnivore, name, number_of_offspring, new_generation):
+        """
+        :param map: map on which the creatures are living, habitat object.
+        :param odds_maturing_to_adult: number between 0 and 100 reprensenting the percent of creatures that survive to the age of maturity
+        :param adult_age: age of maturation, age at which reproduction is possible
+        :param av_adult_weight: average weight for an adult of this species
+        :param av_max_age: average maximum age (age of natural death) for a creature in this species
+        :param annual_growth_rate: factor of increase of weight per year
+        :param gestation_period: time between conception and birth, pregnancy duration
+        :param predators: species which can eat this creature object
+        :param prey: species / plant types which can be eaten
+        :param av_speed: average maximum speed
+        :param av_range: daily range, number of "steps" taken, more theoretical than directly related to a distance
+        :param vision: average eyesight of this species, written as an integer out of 100
+        :param sound: average hearing ability of this species, written as an integer out of 100
+        :param smell: average sense of smell of this species, written as an integer out of 100
+        :param temp_min: minimum survivable temperature for this species
+        :param temp_max: maximum surivable temperature for this species
+        :param water_needs: quantity of water needed per week
+        :param food needs: amount of food needed per week, in square inchess of plant or pound of meat. Meaning customizable
+        :param herbivore: True or False, whether this species eats plants or not
+        :param carnivore: True or False, whether or not this species hunts any other creatures. Species can be both (onmivores)
+        :param name: species name! used for interactions with others and for data collection
+        :param number_of_offspring: average number of offspring per pregnancy
+        :param new generation: True or False, False when first creating creatures. For any creatures created by in-model replication, True.
+        """
 
         # DETERMINING STARTING AGE: THIS IS MAXIMUM LIFESPAN, CREATURES WILL NOT NECESSARILY SURVIVE THIS LONG
         self.odds_maturing_to_adult = odds_maturing_to_adult
@@ -162,7 +167,6 @@ class species:
         # important! if the creature's weight drops below this, it will die. This has been combined with a number of
         # weeks a species can go without their necessary amount of food food before dying (preset at 2 weeks.)
         self.minimum_weight = random.randint(int(0.4*self.adult_weight), int(0.8*self.adult_weight))
-        # FIXME update weight loss to be more based on the amount of food they are short from their needs
 
         # these will be updated throughout the course of the model.
         self.drought_status = False  # when a creature has not gotten enough water for a week (but has had at least 30% of their necessary amount)
@@ -866,26 +870,53 @@ class plant:
 
 "**********************************************************************************************************************"
 class weather:  # ADD WIND AS A POLLINATION METHOD LATER, TEMPERATURE, ETC
+    """
+    This class is used to create daily weather, complete with rain and sun, to determine plant growth and survival rates.
+    It is also possible to directly import weather data from the region being modeled, or this class can be customized
+    to replicate the weather of a specific region. This class can also be modified to include weather, if applicable to
+    your project.
+    
+    """
     def __init__(self, rain_frequency, rain_levels, average_sun_levels):
+        """
+        This method establishes the necessary instance variables.
+        :param rain_frequency: percent of days out of 100 days that this region receives rain
+        :param rain_levels: when this region receives rain, this is the amount of rain
+        :param average_sun_levels: average sun saturation out of 100.
+        """
         self.rain_frequency = rain_frequency  # percent out of 100 that it rains
         self.average_amount_rain = rain_levels
         self.average_sun_levels = average_sun_levels
+
+        # placeholder instance variables to be updated later
         self.sun_level_daily = 0
         self.rain = False
         self.amount_rain = 0
 
     def daily_weather(self):
-        rain_day = random.randint(0, 100)
-        #print(rain_day, self.rain_frequency)
-        if rain_day <= self.rain_frequency:  # FIXME deal with sun presence ASAP!!!!!!!!!
+        """
+        Daily_weather produces the weather for a single day based upon the original instance variables and uses
+        randomization to keep days from being identical. This randomness makes the simulation more accurate, and varies
+        the day to day experience for plant objects.
+        :return: amount_rain: the amount of rain in inches of the "day" for which it was called
+        """
+        rain_day = random.randint(0, 100)  # selecting a random number, if it is within the probability of rain, it rains
+        #print(rain_day, self.rain_frequency) # useful for learning about the program
+        # determining whether or not it rains
+        if rain_day <= self.rain_frequency:  # follows percent probability of instance variables
             self.rain = True
         else:
             self.rain = False
+
+        # determining the amount of rain
         if self.rain == True:
             self.amount_rain = random.randint(5*self.average_amount_rain, 15*self.average_amount_rain)/10
+            # sun levels will be lower on days it rains to account for clouds and vapors
             self.sun_level_daily = random.randint(1*self.average_sun_levels, 5*self.average_sun_levels)/10
         else:
             self.amount_rain = 0
+            # randomly selecting sun levels based on instance variables
             self.sun_level_daily = random.randint(5*self.average_sun_levels, 15*self.average_sun_levels)/10
+
         return self.amount_rain
 
