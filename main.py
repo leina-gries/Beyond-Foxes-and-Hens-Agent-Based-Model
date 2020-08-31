@@ -438,15 +438,16 @@ class habitat:
     Here, length ( the "y" coordinate) comes before width (the "x" coordinate).
 
     """
-    # river: array, present or not, length, width, works for rivers and lengths
-    # area: the area in square units of this habitat.
-    # percent_shelter: the percent of the area of the habitat that is covered in shelter.
-    # average_size_shelter: the average size, in square units, of the shelter clumps, ie how many shelter units tend to be
-        # in the same area as a group
-    # river_presence: a list containing three elements. The first, True or False, whether or not there is a river. The
-        # second, the length of the river in units. The third, the width of the river, in units.
-
     def __init__(self, area, percent_shelter, average_size_shelter, river_presence):
+        """
+        Establishes instance variables and creates a habitat object of the given specifications.
+        :param area: the area in square units of this habitat.
+        :param percent_shelter: the percent of the area of the habitat that is covered in shelter.
+        :param average_size_shelter: the average size, in square units, of the shelter clumps, ie how many shelter units tend to be
+         in the same area as a group
+        :param river_presence: a list containing three elements. The first, True or False, whether or not there is a river. The
+         second, the length of the river in units. The third, the width of the river, in units.
+        """
 
         self.area = area
         self.percent_shelter = percent_shelter
@@ -702,80 +703,121 @@ class habitat:
 
 
 "**********************************************************************************************************************"
-class plant:  #FIXME starting with just one species and assuming that all animals can eat it, add impact of temperature, seasons, etc
-    # FIXME add light
+class plant:
+    """
+    This class, Plant, creates all producers in the ecosystem. These serve as the base of the food chain, and are necessary
+    for the survival of all other organisms. The growth of plants depends on the weather of the week, in relation to their
+    specified needs for rain and sunlight (the latter can be added if relevant to an ecosystem, reproducing the water method).
+    Each week, if they have has sufficient water, they will grow. If their height falls below their minimum height, they
+    will die. This class can reproduce independently using the special method. # fixme add types of plants
+    """
     def __init__(self, average_width, average_height, weekly_growth, weekly_water_needs, nutrient_needs, minimum_height, number_seeds, seed_distribution, cover_provided, mature):
-
+        """
+        This method creates a plant object and establishes the instance variables.
+        :param average_width: the average mature width of this plant species ( at the widest part)
+        :param average_height: the average height of mature plants of this species
+        :param weekly_growth: average weekly growth in inches (if a plant receives the necessary nutrients)
+        :param weekly_water_needs: amount of water needed for this plant species to survive and grow
+        :param nutrient_needs: optional, can be added if relevent. Nutrient richness necessary to thrive
+        :param minimum_height: smallest this plant species can be reduced to and still grow back / survive
+        :param number_seeds: the average number of seeds produced by this plant species
+        :param seed_distribution: optional, use if using plant evolution.
+        :param cover_provided: can be used to provide cover to small creatures
+        :param mature: True or False, whether or not this plant is a new generation
+        """
 
         self.alive = True
-        #self.density = density # number of plants per square foot  # mayve do this in a more metal place????
+        # personal minimum height- related to the minimum height for the species in general
         self.minimum_height = random.randint(int(75*minimum_height), int(125*minimum_height))/100
+
         self.mature = mature
 
         if self.mature == True:
+            # mature plants have higher needs than immature plants. This can be customzed to better match the ecosystem
             self.nutrient_needs = nutrient_needs
             self.weekly_growth_average = weekly_growth
-            self.width = random.randint(int(5 * average_width), int(15 * average_width)) / 10
-            self.height = random.randint(int(75 * average_height), int(125 * average_height)) / 100
+            # height and width are selected randomly based off of instance variables
+            self.width = random.randint(int(5 * average_width), int(15 * average_width)) / 10  # initial width
+            self.height = random.randint(int(75 * average_height), int(125 * average_height)) / 100   # initial height
             self.water_needs = random.randint(int(9 * weekly_water_needs), int(11 * weekly_water_needs)) / 10
-            pollinated = random.randint(0,1)
+            pollinated = random.randint(0,1)  # these odds can be manipulated to represent a specific ecosystem
             if pollinated == 1:
                 self.pollinated = True
             else:
                 self.pollinated = False
         else:
+            # immature plants do not need as much to grow, due to size and lack or reproduction
             self.pollinated = False
             self.nutrient_needs = nutrient_needs /10
-            self.weekly_growth_average = weekly_growth * 2
+            self.weekly_growth_average = weekly_growth * 2  # faster growth rate
+            # height and width are selected randomly based off of instance variables
             self.width = random.randint(int(5 * average_width), int(15 * average_width)) / 100
             self.height = random.randint(int(75 * average_height), int(125 * average_height)) / 1000
+            # can be customized
             self.water_needs = random.randint(int(9 * weekly_water_needs), int(11 * weekly_water_needs)) / 100
 
+        # number of seeds will vary between plants
         self.number_seeds = int(random.randint(int(75*number_seeds), int(125*number_seeds))/100)
-        #print(self.number_seeds)
+        # optional, can be used. Currently, random seed distribution
         self.seed_distribution = random.randint(int(5*seed_distribution), int(15*seed_distribution))/10
+        # can also be used, just add to the "distance to shelter" code for small enough species. Optional
         self.cover_provided = cover_provided*((self.width*self.height)/100)  # percent cover provided per inch of height
-        self.water_log = []        # currently on a two week set up, make variable later.
+
+        # creating empty logs to store information in later
+        self.water_log = []
         self.nutrient_log =[]
+
+        # impacts water needs and status
         self.drought_status = False
 
+        # to be passed on to the next generation
         self.average_width = average_width
         self.average_height = average_height
         self.weekly_growth = weekly_growth
         self.weekly_water_needs = weekly_water_needs
 
+        # a placeholder as the plant currently has no death cause
         self.death_cause = False
 
 
 
-
-    def growth(self, weekly_water):  # done at the end of each week
+    def growth(self, weekly_water):
+        """
+        Growth updates the plant object's size depending on the plant's water intake in the previous week, the plant's
+        drought status, and the plants size ( maturity status).
+        :param weekly_water: the total amount of water consumed throughout the week
+        :return: the amount of growth- either 0 or a float. Updates instance variables
+        """
+        # updating maturity status and pollination status
         if self.mature == False:
-            if self.height >= self.average_height:
-                self.mature = True
-                pollinated = random.randint(0, 1)
+            if self.height >= self.average_height:  # if it is not mature but above mature height
+                self.mature = True  # becomes mature
+                pollinated = random.randint(0, 1)  # testing pollination and updating
                 if pollinated == 1:
                     self.pollinated = True
                 else:
                     self.pollinated = False
             else:
-                self.mature = False
+                self.mature = False  # remains immature if below the margin
 
+        # determining growth
         if self.drought_status == True:  # did not get enough water last week
             if weekly_water < self.water_needs:  # not enough water for 2 weeks in a row, dead
                 self.alive = False
-                self.death_cause = "plant drought"
+                self.death_cause = "plant drought"  # useful for balancinh ecosystems
                 return 0
             else:
-                self.drought_status = False  # enough water, growth
+                self.drought_status = False  # enough water this week. Growth is possible
+                # the growth will be a random amount in the preset range
                 growth =  random.randint(75*self.weekly_growth_average, 125*self.weekly_growth_average)/100
-               # print("growth", growth)
+                # print("growth", growth)  # can be useful
+                # the growth is divided equally beween the plant's heigt and width to maining the plant's dimension ratop
                 self.height = self.height + growth /2
                 self.width = self.width + growth /2
                 return growth
         else:  # not currently in a state of drought
             if weekly_water < self.water_needs:  # not enough water, into drought
-                self.drought_status = True
+                self.drought_status = True  # updating instance variable
                 return 0
             else:
                 self.drought_status = False    # enough water, growth
@@ -787,24 +829,38 @@ class plant:  #FIXME starting with just one species and assuming that all animal
 
 
 
-
-    def print1(self):
-        print("yeeeeeeee")
-
     def be_eaten(self, amount_eaten):
-        self.height = self.height * (1- amount_eaten)
+        """
+        Determines if a plant survives being eaten by comparing the amount of the plant that is eaten to the plant's
+        current height and their minimum height.
+        :param amount_eaten: the percent of the plant that is eaten
+        :return: updates the plant's height
+        """
+        self.height = self.height * (1- amount_eaten)  # calculating how much of the plant is left after being eaten
+        # checking if the plant survives being eaten
         if self.height < self.minimum_height:
             self.alive = False
             self.death_cause = "eaten"
-        #print("hereherehere", amount_eaten)
+
+
 
     def reproduce(self, map):
-        baby_plants = []  # fixme make plant replication seasonal
+        """
+        This method creates more plant objects using the parameters initially used to create the plant objects. It creates
+        a specific number of them based off of the plant's number of seeds. These newly created plants are then placed
+        onto the map randomly. This could be based off of the plant's seed distribution if desired. This is only called
+        if a plant is fertilized so it does not need to check this.
+        :param map: the map representing the habitat object the plants are to be placed on
+        :return: the list of newly created plants (baby_plants)
+        """
+        baby_plants = []
         for i in range(self.number_seeds):
-            #print("new plant")
-            baby_plants.append(plant(self.average_width, self.average_height, self.weekly_growth, self.weekly_water_needs, self.nutrient_needs, self.minimum_height, self.number_seeds, self.seed_distribution, self.cover_provided, False))
-            map.place_plant_objects(baby_plants)
-        self.pollinated = False
+            #print("new plant") # helps to see if replication is happening
+            # makes new plants based off of the variables used to create the original plants
+            # however, these new plants are not mature.
+            baby_plants.append(plant(self.average_width, self.average_height, self.weekly_growth, self.weekly_water_needs, self.nutrient_needs, self.minimum_height, self.number_seeds, self.seed_distribution, self.cover_provided, True))
+            map.place_plant_objects(baby_plants)  # placing the plants on the map using the map method
+        self.pollinated = False  # after seeds are produced, fertility reverts to false
         return baby_plants
 
 
