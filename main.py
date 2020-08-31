@@ -26,7 +26,7 @@ class species:
                  food_needs, herbivore, carnivore, name, number_of_offspring, new_generation):
         """
         :param map: map on which the creatures are living, habitat object.
-        :param odds_maturing_to_adult: number between 0 and 100 reprensenting the percent of creatures that survive to the age of maturity
+        :param odds_maturing_to_adult: number between 0 and 100 representing the percent of creatures that survive to the age of maturity
         :param adult_age: age of maturation, age at which reproduction is possible
         :param av_adult_weight: average weight for an adult of this species
         :param av_max_age: average maximum age (age of natural death) for a creature in this species
@@ -40,20 +40,20 @@ class species:
         :param sound: average hearing ability of this species, written as an integer out of 100
         :param smell: average sense of smell of this species, written as an integer out of 100
         :param temp_min: minimum survivable temperature for this species
-        :param temp_max: maximum surivable temperature for this species
+        :param temp_max: maximum survivable temperature for this species
         :param water_needs: quantity of water needed per week
-        :param food needs: amount of food needed per week, in square inchess of plant or pound of meat. Meaning customizable
+        :param food_needs: amount of food needed per week, in square inches of plant or pound of meat. Meaning customizable
         :param herbivore: True or False, whether this species eats plants or not
-        :param carnivore: True or False, whether or not this species hunts any other creatures. Species can be both (onmivores)
+        :param carnivore: True or False, whether or not this species hunts any other creatures. Species can be both (omnivores)
         :param name: species name! used for interactions with others and for data collection
         :param number_of_offspring: average number of offspring per pregnancy
-        :param new generation: True or False, False when first creating creatures. For any creatures created by in-model replication, True.
+        :param new_generation: True or False, False when first creating creatures. For any creatures created by in-model replication, True.
         """
 
         # DETERMINING STARTING AGE: THIS IS MAXIMUM LIFESPAN, CREATURES WILL NOT NECESSARILY SURVIVE THIS LONG
         self.odds_maturing_to_adult = odds_maturing_to_adult
         # if not mature, this determines whether a creature will survive to maturity
-        if new_generation == True:  # called when existing objects create more objects through reproduce method
+        if new_generation:  # called when existing objects create more objects through reproduce method
             survival = random.randint(0,100)
             if survival > odds_maturing_to_adult:  # this means they will die before reaching maturity
                 self.personal_maximum_age_days = (adult_age * random.randint(0, 100) / 100) * 365
@@ -62,7 +62,7 @@ class species:
                 self.personal_maximum_age_days = (av_max_age * random.randint(85, 115) / 100) * 365  # fixed?
 
         # DETERMINING CURRENT AGE; AGE THE OBJECT WILL BEGIN WITH
-        if new_generation == False:  # randomly assigns an age to each first generation object
+        if not new_generation:  # randomly assigns an age to each first generation object
             self.age_days = random.randint(1, av_max_age*365)
             self.personal_maximum_age_days = (av_max_age * random.randint(85, 115) / 100) * 365
         else:
@@ -87,7 +87,7 @@ class species:
         self.predators = predators # a list of creature types that can eat this one
         self.prey = prey  # a nested list, each interior list contains a creature name and that creature's odds of survival
 
-        # personal abiities
+        # personal abilities
         self.speed = av_speed * random.randint(75,125)/100  # maximum speed
         self.range = av_range * random.randint(75,125)/100  # daily range- number of "steps" taken
         self.vision = vision * random.randint(85,115)/100
@@ -95,7 +95,7 @@ class species:
         self.smell = smell * random.randint(85,115)/100
 
         # this will be used to help determine survival by comparing both species abilities in a predation scenario
-        self.coefficient = (self.vision + self.sound + self.smell)/300 + (self.speed)/100
+        self.coefficient = (self.vision + self.sound + self.smell) / 300 + self.speed / 100
 
         # these can be built into the weather to determine the impacts of climate
         self.temp_min = temp_min
@@ -230,12 +230,12 @@ class species:
         # this block controls whether or not a creature eats, and how much it eats
         if weekly_food_counter < self.food_needs:
             # for all creatures that eat plant material of any kind
-            if self.herbivore == True:
+            if self.herbivore:
                 # if the creature's location on the map is occupied by a plant:
                 if type(self.map.map[self.location[0]-1][self.location[1]-1]) == plant:
                     # naming this plant plant1 to reference with ease
                     plant1 = self.map.map[self.location[0]-1][self.location[1]-1]
-                    if plant1.alive == True:  # only living plants may be eaten!
+                    if plant1.alive:  # only living plants may be eaten!
                         # eating a random amount of the plant, based off of the plant's height
                         height_eaten = random.randint(int(plant1.height/5), int(plant1.height))/plant1.height
                         # avoiding eating nothing as this is unlikely! can be customized
@@ -246,7 +246,7 @@ class species:
                         plant1.be_eaten(height_eaten)  # calling a method to update the plant with the amount that was eaten
 
             # for all creatures that eat meat
-            elif self.carnivore == True:
+            elif self.carnivore:
                 for species1, location in map.species_placement.items():  # for each other species and their location
                     #print("here", species1.name)
                     if self.location == location and self != species1 and species1.alive == True:
@@ -310,21 +310,28 @@ class species:
         """
         if self.weight > self.adult_weight:  # if they are at their mature weight, growth slows to the normal amount
             self.weight = self.weight * (1/52)*self.annual_growth_rate
-        else:  # when they are below their mature weight, (either because they are juvenilles or because they are underfed,
+        else:  # when they are below their mature weight, (either because they are juveniles or because they are underfed,
             # their weight increases at twice the normal weight
             self.weight = self.weight * (1/26)*self.annual_growth_rate
 
 
 
     def lose_weight(self):
-        if self.losing_weight == False: #FIXME MAKE MARGINS MORE REALISTIC can be losing weight for a while but die with no food
+        """
+        This is called when a species has not consumed enough food for the week. This updates the creature's
+        weight_loss status and, if necessary, the creature's status as alive or dead. Currently, regardless or weight, the
+        creatures can loose weight twice in a row before dying. This could be updated depending on personal
+        preference.
+        :return: updates self.losing_weight and self.alive
+        """
+        if not self.losing_weight: #FIXME MAKE MARGINS MORE REALISTIC can be losing weight for a while but die with no food
             #self.weight_difference = self.weight - self.minimum_weight
             #self.weight = self.weight - (self.weight_difference/2)
             self.losing_weight = True  # informs the way weight loss is processed next time.
             print(self.name, "loosing weight")  # useful when trying to balance a system
         else:
             #self.weight = self.weight - (self.weight_difference / 2)  # can be added to manipulate weight loss
-            self.alive = False  # dies of stavation with too little food two weeks in a row
+            self.alive = False  # dies of starvation with too little food two weeks in a row
             print(self.name, "lost too much weight ")  # useful for balancing systems
             self.death_cause = "lost too much weight"
 
@@ -470,6 +477,10 @@ class habitat:
         self.species_placement = {}
         self.shelter_placement = []
 
+        self.length = 0
+        self.width = 0
+        self.map = []
+
 
     def create_map(self):
         """
@@ -478,7 +489,7 @@ class habitat:
         :return: self.map - the completed map
         """
         # creating the map randomly
-        holder = int(math.sqrt(self.area))  # this is to prevent the creation of an extrordinarily long and skinny map
+        holder = int(math.sqrt(self.area))  # this is to prevent the creation of an very long and skinny map
         self.length = random.randint(int(holder*0.5), int(holder*1.5))  # ensures each side is of at least moderate length
        # print(self.length, "length")  # can be used to show map dimensions
         self.width = int(self.area/self.length)  # finding the corresponding width
@@ -536,7 +547,7 @@ class habitat:
                 line_size = random.randint(1, i)  # a randomly sized line at most the remaining number of units left
                 clump_list.append(line_size)  # add this to the list
                 i  = i - line_size  # remove these from the remaining units
-            lines_per_clump.append(clump_list)  #add the list of lines per that clump to the overlal list
+            lines_per_clump.append(clump_list)  #add the list of lines per that clump to the overall list
             clump_list = []
         self.lines_per_clump = lines_per_clump  # update the instance variable
      #   print(self.lines_per_clump)
@@ -568,7 +579,7 @@ class habitat:
             length_coordinate = random.randint(1, self.length)   # choose a random coordinate within the length
             for j in i: # for each line in each shelter clump
                 for k in range(j):  # in the range of the length of this line of the shelter clump
-                    if width_coordinate < (self.width) and length_coordinate < (self.length):  # checking it fits the map
+                    if width_coordinate < self.width and length_coordinate < self.length:  # checking it fits the map
                         if map_holder[length_coordinate-1][width_coordinate-1] == 0:  # if blank, place shelter
                             map_holder[length_coordinate-1][width_coordinate-1] = "S"
                             # adding this to the list of locations with shelter
@@ -650,18 +661,18 @@ class habitat:
         mini_map_river = []
         map_holder_river = []
 
-        # this makes a mini map to hold the river data placement attepts before pushing these through to the main map
+        # this makes a mini map to hold the river data placement attempts before pushing these through to the main map
         for i in self.map:  # each outer list
             for j in i:  # each inner list
                 mini_map_river.append(j)
             map_holder_river.append(mini_map_river)
             mini_map_river = []
 
-        if self.river_presence == True:  # only make a river if there is a river on the map!
+        if self.river_presence:  # only make a river if there is a river on the map!
             length_coordinate = 0
             width_coordinate = 0
             for i in range(self.river_width):  # this will move left to right adding river units depending on width
-                for i in range(self.river_length):  # this will go downwards as long as necessary until length is met
+                for f in range(self.river_length):  # this will go downwards as long as necessary until length is met
                     # checking that we have not moved off of the map
                     if length_coordinate < self.length and width_coordinate < self.width:
                         # adding a river marker
@@ -688,7 +699,7 @@ class habitat:
 
     def place_plant_objects(self, plant_objects):
         """
-        This method places the plant objets created elsewhere on the map. It places the entire object here, which enables
+        This method places the plant objects created elsewhere on the map. It places the entire object here, which enables
         them to be manipulated simply and efficiently. It uses the available_list to find empty (non water) spots to
         place plants.
         :param plant_objects: A list of plant objects
@@ -722,7 +733,7 @@ class plant:
         :param average_height: the average height of mature plants of this species
         :param weekly_growth: average weekly growth in inches (if a plant receives the necessary nutrients)
         :param weekly_water_needs: amount of water needed for this plant species to survive and grow
-        :param nutrient_needs: optional, can be added if relevent. Nutrient richness necessary to thrive
+        :param nutrient_needs: optional, can be added if relevant. Nutrient richness necessary to thrive
         :param minimum_height: smallest this plant species can be reduced to and still grow back / survive
         :param number_seeds: the average number of seeds produced by this plant species
         :param seed_distribution: optional, use if using plant evolution.
@@ -736,8 +747,8 @@ class plant:
 
         self.mature = mature
 
-        if self.mature == True:
-            # mature plants have higher needs than immature plants. This can be customzed to better match the ecosystem
+        if self.mature:
+            # mature plants have higher needs than immature plants. This can be customized to better match the ecosystem
             self.nutrient_needs = nutrient_needs
             self.weekly_growth_average = weekly_growth
             # height and width are selected randomly based off of instance variables
@@ -793,7 +804,7 @@ class plant:
         :return: the amount of growth- either 0 or a float. Updates instance variables
         """
         # updating maturity status and pollination status
-        if self.mature == False:
+        if not self.mature:
             if self.height >= self.average_height:  # if it is not mature but above mature height
                 self.mature = True  # becomes mature
                 pollinated = random.randint(0, 1)  # testing pollination and updating
@@ -805,17 +816,17 @@ class plant:
                 self.mature = False  # remains immature if below the margin
 
         # determining growth
-        if self.drought_status == True:  # did not get enough water last week
+        if self.drought_status:  # did not get enough water last week
             if weekly_water < self.water_needs:  # not enough water for 2 weeks in a row, dead
                 self.alive = False
-                self.death_cause = "plant drought"  # useful for balancinh ecosystems
+                self.death_cause = "plant drought"  # useful for balancing ecosystems
                 return 0
             else:
                 self.drought_status = False  # enough water this week. Growth is possible
                 # the growth will be a random amount in the preset range
                 growth =  random.randint(75*self.weekly_growth_average, 125*self.weekly_growth_average)/100
                 # print("growth", growth)  # can be useful
-                # the growth is divided equally beween the plant's heigt and width to maining the plant's dimension ratop
+                # the growth is divided equally between the plant's height and width to maintain the plant's dimension ratio
                 self.height = self.height + growth /2
                 self.width = self.width + growth /2
                 return growth
@@ -875,7 +886,7 @@ class weather:  # ADD WIND AS A POLLINATION METHOD LATER, TEMPERATURE, ETC
     It is also possible to directly import weather data from the region being modeled, or this class can be customized
     to replicate the weather of a specific region. This class can also be modified to include weather, if applicable to
     your project.
-    
+
     """
     def __init__(self, rain_frequency, rain_levels, average_sun_levels):
         """
@@ -909,7 +920,7 @@ class weather:  # ADD WIND AS A POLLINATION METHOD LATER, TEMPERATURE, ETC
             self.rain = False
 
         # determining the amount of rain
-        if self.rain == True:
+        if self.rain:
             self.amount_rain = random.randint(5*self.average_amount_rain, 15*self.average_amount_rain)/10
             # sun levels will be lower on days it rains to account for clouds and vapors
             self.sun_level_daily = random.randint(1*self.average_sun_levels, 5*self.average_sun_levels)/10
