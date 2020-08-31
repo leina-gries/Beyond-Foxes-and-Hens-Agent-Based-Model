@@ -209,6 +209,7 @@ class species:
         """
         self.location[0] = self.location[0]+ height_change  # changing the height (interior list number)
         self.location[1] = self.location[1]+ width_change  # changing the width (position in interior list)
+
         return self.location  # where the object is in relation to the habitat map
 
 
@@ -257,7 +258,8 @@ class species:
                                 # they currently take into account the relative abilities of each species in question, and
                                 # their distance to shelter, so the prey object can make an escape. There is also a random
                                 # element to this
-                                prey_survival_odds = random.randint(0,100) +((self.coefficient - species1.coefficient) /(species1.closest_distance+1))
+                                prey_survival_odds = random.randint(0,100) +\
+                                                     ((self.coefficient - species1.coefficient) /(species1.closest_distance+1))
                                 if prey_survival_odds > i[1]:  # must be smaller than their odds of survival to survive
                                     # example: a species survives 30% of attacks from another set species. If their survival odds are
                                     # anything over 30, they will not survive, but 30 and under, they will.
@@ -266,10 +268,11 @@ class species:
                                     self.food_history.append(species1.weight)  # add the weight of the prey to the predator's food history
 
         if self.map.map[self.location[0] - 1][self.location[1] - 1] == "R":  # if they are "in" a river
-            #print("water", self.map.map[self.location[0]-1][self.location[1]-1])
+            # print("water", self.map.map[self.location[0]-1][self.location[1]-1])
             self.water_history.append(self.water_needs/ (7/3))  # each time they find water, they drink a day's worth
+
         if self.map.map[self.location[0] - 1][self.location[1] - 1] == "W":  # if they are "in" a different water source
-            #print("water1", self.map.map[self.location[0] - 1][self.location[1] - 1])
+            # print("water1", self.map.map[self.location[0] - 1][self.location[1] - 1])
             self.water_history.append(self.water_needs / (7/3))  # each time they find water, they drink a day's worth
 
 
@@ -291,10 +294,11 @@ class species:
         for i in range(number_of_offspring):  # create "number_of_offspring" creatures
             # using the instance variables from the parent creature (self) to initiate new creatures
             # add the new creatures to the list of new creatures
-            baby_list.append(species(self.map, self.odds_maturing_to_adult, self.adult_age, self.adult_weight, self.max_age, self.annual_growth_rate,
-                     self.gestation_period, self.dependency_time,
-                     self.predators, self.prey, self.av_speed, self.av_range, self.vision, self.sound, self.smell, self.temp_min, self.temp_max, self.water_needs,
-                        self.food_needs, self.herbivore, self.carnivore, self.name, self.number_of_offspring, True))
+            baby_list.append(species(self.map, self.odds_maturing_to_adult, self.adult_age, self.adult_weight,
+                                     self.max_age, self.annual_growth_rate, self.gestation_period, self.dependency_time,
+                                     self.predators, self.prey, self.av_speed, self.av_range, self.vision, self.sound,
+                                     self.smell, self.temp_min, self.temp_max, self.water_needs, self.food_needs,
+                                     self.herbivore, self.carnivore, self.name, self.number_of_offspring, True))
                         # the final variable, "New Generation", is set to True, to control age and size of the new creatures
                         # this is the only way the initiation of the new creatures differ from the original generation of
                         # creatures.
@@ -306,14 +310,13 @@ class species:
         """
         This controls the weekly growth of a creature. It is only called if they have consumed enough food that week.
         :return: updates the instance variable
-
         """
         if self.weight > self.adult_weight:  # if they are at their mature weight, growth slows to the normal amount
             self.weight = self.weight * (1/52)*self.annual_growth_rate
+
         else:  # when they are below their mature weight, (either because they are juveniles or because they are underfed,
             # their weight increases at twice the normal weight
             self.weight = self.weight * (1/26)*self.annual_growth_rate
-
 
 
     def lose_weight(self):
@@ -324,13 +327,14 @@ class species:
         preference.
         :return: updates self.losing_weight and self.alive
         """
-        if not self.losing_weight: #FIXME MAKE MARGINS MORE REALISTIC can be losing weight for a while but die with no food
-            #self.weight_difference = self.weight - self.minimum_weight
-            #self.weight = self.weight - (self.weight_difference/2)
+        if not self.losing_weight: # FIXME MAKE MARGINS MORE REALISTIC can be losing weight for a while but die with no food
+            # self.weight_difference = self.weight - self.minimum_weight
+            # self.weight = self.weight - (self.weight_difference/2)
             self.losing_weight = True  # informs the way weight loss is processed next time.
             print(self.name, "loosing weight")  # useful when trying to balance a system
+
         else:
-            #self.weight = self.weight - (self.weight_difference / 2)  # can be added to manipulate weight loss
+            # self.weight = self.weight - (self.weight_difference / 2)  # can be added to manipulate weight loss
             self.alive = False  # dies of starvation with too little food two weeks in a row
             print(self.name, "lost too much weight ")  # useful for balancing systems
             self.death_cause = "lost too much weight"
@@ -345,19 +349,24 @@ class species:
         """
         if weekly_food_counter < self.food_needs:  # if the amount of food eaten total that week is lower than needed
             self.lose_weight()  # lose weight
+
         else:
             self.losing_weight = False
             if weekly_water_counter > self.water_needs:  # if both food and water intake is sufficient
                 self.growth_weekly()  # grow!
+
         if self.age_days >= self.personal_maximum_age_days:  # if its age is above its maximum age in days
             self.alive = False  # death of old age
             self.death_cause = "age"
+
         if weekly_water_counter < self.water_needs *0.25:  # USER: CHANGE THIS TO IMPACT DROUGHT TOLERANCE
             self.alive = False  # death of dehydration if less than 1/4 of weekly water needs are consumed
             self.death_cause = "dehydration"
+
         if weekly_water_counter < self.water_needs and self.drought_status == True:
             self.alive = False  # if already in a drought and not consuming enough water a second week in a row
             self.death_cause = "dehydration"  # death by dehydration
+
         if weekly_water_counter > self.water_needs*0.25 and weekly_water_counter < self.water_needs:
             # if water intake is between a quarter and the proper amount of water, enters a drought status
             self.drought_status = True
@@ -383,7 +392,8 @@ class species:
         fifth = random.randint(0, len(map.shelter_placement))
 
         # a list of the actual locations of each of the chosen shelter pieces
-        points_list = [map.shelter_placement[first-1], map.shelter_placement[second-1], map.shelter_placement[third-1], map.shelter_placement[fourth-1], map.shelter_placement[fifth-1]]
+        points_list = [map.shelter_placement[first-1], map.shelter_placement[second-1], map.shelter_placement[third-1],
+                       map.shelter_placement[fourth-1], map.shelter_placement[fifth-1]]
 
         # this for loop finds the distance between the creature and the shelter unit in question
         for i in points_list:
@@ -396,8 +406,11 @@ class species:
             # adding the distance to the list
             self.distances_list.append(distance)
         # find the smallest distance
+
         self.distances_list.sort()
         self.closest_distance = self.distances_list[0]  # use the smallest
+
+
         """
         ## This code is less efficient but uses all of the points in the shelter placement list. 
         for i in map.shelter_placement:
@@ -514,8 +527,9 @@ class habitat:
         """
         # setting randomly sized units of shelter
         self.units_of_shelter = int(self.percent_shelter/100 * self.area)  # square feet or units
-        #print("units total shelter", units_of_shelter) # helpful at the start
+        # print("units total shelter", units_of_shelter) # helpful at the start
         counter = 0
+
         while self.units_of_shelter > 0:  # while there are still remaining units of shelter
             # a clump is between half and twice the average shelter size, normally
             clump_size = random.randint(int(self.average_size_shelter/2), int(2*self.average_size_shelter))
@@ -528,8 +542,9 @@ class habitat:
             counter = counter + clump_size
             # tracking the units of shelter used so as not to go over
             self.units_of_shelter = self.units_of_shelter - clump_size
-            #print(units_of_shelter, "units left")
-     #   print("sizes", self.shelter_clump_sizes, "counter", counter)  # useful
+            # print(units_of_shelter, "units left")
+        # print("sizes", self.shelter_clump_sizes, "counter", counter)  # useful
+
         return self.shelter_clump_sizes
 
 
@@ -541,7 +556,8 @@ class habitat:
         """
         clump_list = []
         lines_per_clump = []
-      #  print(self.shelter_clump_sizes)
+        #  print(self.shelter_clump_sizes)
+
         for i in self.shelter_clump_sizes:  # for each shelter clump
             while i > 0:  # while there are units of shelter remaining
                 line_size = random.randint(1, i)  # a randomly sized line at most the remaining number of units left
@@ -549,8 +565,10 @@ class habitat:
                 i  = i - line_size  # remove these from the remaining units
             lines_per_clump.append(clump_list)  #add the list of lines per that clump to the overall list
             clump_list = []
+
         self.lines_per_clump = lines_per_clump  # update the instance variable
-     #   print(self.lines_per_clump)
+        #  print(self.lines_per_clump)
+
         return self.lines_per_clump
 
 
@@ -580,18 +598,23 @@ class habitat:
             for j in i: # for each line in each shelter clump
                 for k in range(j):  # in the range of the length of this line of the shelter clump
                     if width_coordinate < self.width and length_coordinate < self.length:  # checking it fits the map
+
                         if map_holder[length_coordinate-1][width_coordinate-1] == 0:  # if blank, place shelter
                             map_holder[length_coordinate-1][width_coordinate-1] = "S"
                             # adding this to the list of locations with shelter
                             self.shelter_placement.append([length_coordinate, width_coordinate, "S"])
+
                         elif map_holder[length_coordinate-1][width_coordinate-1] == "S":  # if sheltered, add dense shelter
                             map_holder[length_coordinate-1][width_coordinate-1] = "DS"
                             # adding this to the list of locations with shelter
                             self.shelter_placement.append([length_coordinate, width_coordinate, "DS"])
-                        while map_holder[length_coordinate-1][width_coordinate-1] == "R" or map_holder[length_coordinate-1][width_coordinate-1] == "W":
+
+                        while map_holder[length_coordinate-1][width_coordinate-1] == "R" or \
+                                map_holder[length_coordinate-1][width_coordinate-1] == "W":
                             # if there is water or a river here, select a different coordinate and start over
                             width_coordinate = random.randint(1, self.width)
                             length_coordinate = random.randint(1, self.length)
+
                     else:  # if this goes off the edge of the map
                         self.shelter_placement = []  # clear this instance variable
                         return False  # start the placement over. This means a line went over the edge
@@ -601,7 +624,7 @@ class habitat:
             width_coordinate = width_coordinate - j  # reset location
 
         self.map = map_holder # if all works, set the main map equal to the placeholder
-        #print(self.shelter_placement) # can be useful
+        # print(self.shelter_placement) # can be useful
         return True
 
 
@@ -648,6 +671,7 @@ class habitat:
                     pass  # this can be added if you want to note spaces with water
                   #  print("no", n)
             second_counter = 0
+
         return self.animal_available_list
 
 
@@ -726,7 +750,8 @@ class plant:
     Each week, if they have has sufficient water, they will grow. If their height falls below their minimum height, they
     will die. This class can reproduce independently using the special method. # fixme add types of plants
     """
-    def __init__(self, average_width, average_height, weekly_growth, weekly_water_needs, nutrient_needs, minimum_height, number_seeds, seed_distribution, cover_provided, mature):
+    def __init__(self, average_width, average_height, weekly_growth, weekly_water_needs, nutrient_needs, minimum_height,
+                 number_seeds, seed_distribution, cover_provided, mature):
         """
         This method creates a plant object and establishes the instance variables.
         :param average_width: the average mature width of this plant species ( at the widest part)
@@ -760,6 +785,7 @@ class plant:
                 self.pollinated = True
             else:
                 self.pollinated = False
+
         else:
             # immature plants do not need as much to grow, due to size and lack or reproduction
             self.pollinated = False
@@ -830,6 +856,7 @@ class plant:
                 self.height = self.height + growth /2
                 self.width = self.width + growth /2
                 return growth
+
         else:  # not currently in a state of drought
             if weekly_water < self.water_needs:  # not enough water, into drought
                 self.drought_status = True  # updating instance variable
@@ -852,6 +879,7 @@ class plant:
         :return: updates the plant's height
         """
         self.height = self.height * (1- amount_eaten)  # calculating how much of the plant is left after being eaten
+
         # checking if the plant survives being eaten
         if self.height < self.minimum_height:
             self.alive = False
@@ -869,12 +897,16 @@ class plant:
         :return: the list of newly created plants (baby_plants)
         """
         baby_plants = []
+
         for i in range(self.number_seeds):
             #print("new plant") # helps to see if replication is happening
             # makes new plants based off of the variables used to create the original plants
             # however, these new plants are not mature.
-            baby_plants.append(plant(self.average_width, self.average_height, self.weekly_growth, self.weekly_water_needs, self.nutrient_needs, self.minimum_height, self.number_seeds, self.seed_distribution, self.cover_provided, True))
+            baby_plants.append(plant(self.average_width, self.average_height, self.weekly_growth,
+                                     self.weekly_water_needs, self.nutrient_needs, self.minimum_height,
+                                     self.number_seeds, self.seed_distribution, self.cover_provided, True))
             map.place_plant_objects(baby_plants)  # placing the plants on the map using the map method
+
         self.pollinated = False  # after seeds are produced, fertility reverts to false
         return baby_plants
 
@@ -912,7 +944,7 @@ class weather:  # ADD WIND AS A POLLINATION METHOD LATER, TEMPERATURE, ETC
         :return: amount_rain: the amount of rain in inches of the "day" for which it was called
         """
         rain_day = random.randint(0, 100)  # selecting a random number, if it is within the probability of rain, it rains
-        #print(rain_day, self.rain_frequency) # useful for learning about the program
+        # print(rain_day, self.rain_frequency) # useful for learning about the program
         # determining whether or not it rains
         if rain_day <= self.rain_frequency:  # follows percent probability of instance variables
             self.rain = True
@@ -924,6 +956,7 @@ class weather:  # ADD WIND AS A POLLINATION METHOD LATER, TEMPERATURE, ETC
             self.amount_rain = random.randint(5*self.average_amount_rain, 15*self.average_amount_rain)/10
             # sun levels will be lower on days it rains to account for clouds and vapors
             self.sun_level_daily = random.randint(1*self.average_sun_levels, 5*self.average_sun_levels)/10
+
         else:
             self.amount_rain = 0
             # randomly selecting sun levels based on instance variables
